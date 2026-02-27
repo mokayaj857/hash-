@@ -4,6 +4,7 @@ import Home from "./Components/Home";
 import Header from "./Components/Header";
 import Nav from "./Components/Nav";
 import Scroll from "./Components/scroll";
+import White from "./Components/white";
 const App = () => {
   return (
     <Router>
@@ -12,6 +13,7 @@ const App = () => {
         <Route path="hero" element={<Hero />} /> 
         <Route path="/" element={<Home />} />
         <Route path="nav" element={<Nav />} />
+        <Route path="white" element={<White />} />
         <Route path="header" element={<Header />} />
         <Route path="scroll" element={<Scroll />} />
         {/* <Route path="weather" element={<Weather />} /> */}

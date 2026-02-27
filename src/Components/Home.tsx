@@ -628,240 +628,204 @@ export default function HashmarkPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: isMobile ? "0 20px" : "0 clamp(32px, 4vw, 72px)",
-            height: isMobile ? 62 : 72,
+            padding: isMobile ? "0 20px" : "0 clamp(32px, 4vw, 64px)",
+            height: isMobile ? 64 : 70,
             flexShrink: 0,
             animation: "slideDown 0.9s cubic-bezier(0.4,0,0.2,1) both 0.1s",
-            background: dark
-              ? "rgba(5,5,5,0.75)"
-              : "rgba(245,243,239,0.85)",
-            backdropFilter: "blur(20px)",
-            borderBottom: dark
-              ? "1px solid rgba(255,255,255,0.06)"
-              : "1px solid rgba(0,0,0,0.08)",
-            transition: "background 0.4s ease, border-color 0.4s ease",
+            background: dark ? "#0d0d0d" : "#ffffff",
+            borderBottom: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)",
+            transition: "background 0.35s ease, border-color 0.35s ease",
           }}
         >
-          {/* Brand */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Logo mark */}
+          {/* ── Brand ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div style={{
-                position: "absolute",
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: "rgba(212,168,67,0.15)",
-                filter: "blur(8px)",
+                position: "absolute", width: 34, height: 34, borderRadius: "50%",
+                background: "rgba(212,168,67,0.2)", filter: "blur(6px)",
               }} />
-              <svg width="30" height="30" viewBox="0 0 20 20" fill="none" style={{ position: "relative" }}>
-                <line x1="6" y1="2" x2="4" y2="18" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
-                <line x1="13" y1="2" x2="11" y2="18" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
-                <line x1="2" y1="7" x2="18" y2="7" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
-                <line x1="1.5" y1="13" x2="17.5" y2="13" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
+              <svg width="28" height="28" viewBox="0 0 20 20" fill="none" style={{ position: "relative" }}>
+                <line x1="6" y1="2" x2="4" y2="18" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" />
+                <line x1="13" y1="2" x2="11" y2="18" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" />
+                <line x1="2" y1="7" x2="18" y2="7" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" />
+                <line x1="1.5" y1="13" x2="17.5" y2="13" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <span style={{
                 fontSize: isMobile ? 15 : 17,
-                letterSpacing: "0.3em",
+                letterSpacing: "0.28em",
                 textTransform: "uppercase",
                 color: dark ? "#ffffff" : "#0a0a0a",
-                fontWeight: 600,
+                fontWeight: 700,
                 lineHeight: 1,
-                transition: "color 0.4s",
-              }}>
-                HASHMARK
-              </span>
+                transition: "color 0.35s",
+              }}>HASHMARK</span>
               <span style={{
-                fontSize: 8,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color: "#D4A843",
-                fontWeight: 400,
-                lineHeight: 1,
-                opacity: 0.8,
-              }}>
-                PROTOCOL
-              </span>
+                fontSize: 8, letterSpacing: "0.2em", textTransform: "uppercase",
+                color: "#D4A843", fontWeight: 500, lineHeight: 1,
+              }}>PROTOCOL</span>
             </div>
           </div>
 
-          {/* Desktop nav */}
+          {/* ── Desktop nav ── */}
           {!isMobile && (
-            <nav style={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <nav style={{ display: "flex", gap: 4, alignItems: "center" }}>
+
+              {/* Nav links */}
               {NAV.map((item) => (
-                <a
-                  key={item}
-                  href="#"
+                <a key={item} href="#"
                   style={{
-                    fontSize: 12,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    textDecoration: "none",
-                    fontWeight: 500,
-                    color: dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
-                    padding: "8px 16px",
-                    borderRadius: 8,
-                    border: "1px solid transparent",
-                    transition: "color 0.2s, border-color 0.2s, background 0.2s",
+                    fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase",
+                    textDecoration: "none", fontWeight: 600,
+                    color: dark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.65)",
+                    padding: "7px 14px", borderRadius: 7,
+                    transition: "color 0.2s, background 0.2s",
                     fontFamily: "'DM Mono', monospace",
                   }}
                   onMouseEnter={e => {
                     const el = e.currentTarget as HTMLAnchorElement;
-                    el.style.color = dark ? "#fff" : "#0a0a0a";
-                    el.style.borderColor = dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
-                    el.style.background = dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+                    el.style.color = dark ? "#fff" : "#000";
+                    el.style.background = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
                   }}
                   onMouseLeave={e => {
                     const el = e.currentTarget as HTMLAnchorElement;
-                    el.style.color = dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
-                    el.style.borderColor = "transparent";
+                    el.style.color = dark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.65)";
                     el.style.background = "transparent";
                   }}
-                >
-                  {item}
-                </a>
+                >{item}</a>
               ))}
 
-              <div style={{ width: 1, height: 20, background: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", margin: "0 10px" }} />
+              {/* Separator */}
+              <div style={{ width: 1, height: 22, background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)", margin: "0 8px" }} />
 
               {/* Ledger Live pill */}
               <div style={{
-                display: "flex", alignItems: "center", gap: 7,
-                padding: "6px 13px", borderRadius: 99,
-                border: "1px solid rgba(74,222,128,0.25)",
-                background: "rgba(74,222,128,0.06)",
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "6px 12px", borderRadius: 99,
+                border: "1px solid rgba(74,222,128,0.4)",
+                background: dark ? "rgba(74,222,128,0.1)" : "rgba(74,222,128,0.12)",
               }}>
                 <div style={{
-                  width: 6, height: 6, borderRadius: "50%",
+                  width: 7, height: 7, borderRadius: "50%",
                   background: "#4ade80", boxShadow: "0 0 8px #4ade80",
                   animation: "blink 2s ease-in-out infinite",
                 }} />
-                <span style={{ fontSize: 10, color: "#4ade80", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 500 }}>
+                <span style={{ fontSize: 11, color: "#22c55e", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600 }}>
                   Live
                 </span>
               </div>
 
-              <div style={{ width: 1, height: 20, background: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", margin: "0 10px" }} />
+              {/* Separator */}
+              <div style={{ width: 1, height: 22, background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)", margin: "0 8px" }} />
 
-              {/* Theme toggle */}
+              {/* ── Theme toggle pill ── */}
               <button
                 onClick={() => setDark(d => !d)}
                 aria-label="Toggle theme"
+                title={dark ? "Switch to light mode" : "Switch to dark mode"}
                 style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 38, height: 38, borderRadius: 10,
-                  border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
-                  background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                  cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 7,
+                  padding: "7px 14px", borderRadius: 99, cursor: "pointer",
+                  border: dark ? "1.5px solid rgba(212,168,67,0.6)" : "1.5px solid rgba(0,0,0,0.2)",
+                  background: dark ? "rgba(212,168,67,0.12)" : "rgba(0,0,0,0.06)",
                   transition: "background 0.3s, border-color 0.3s, transform 0.2s",
                   flexShrink: 0,
                 }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.1) rotate(12deg)";
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1) rotate(0deg)";
-                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.06)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
               >
                 {dark ? (
-                  /* Sun icon */
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="5" />
-                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                  </svg>
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2.2" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="5" fill="rgba(212,168,67,0.25)" />
+                      <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                      <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "#D4A843", textTransform: "uppercase" }}>Light</span>
+                  </>
                 ) : (
-                  /* Moon icon */
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                  </svg>
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(30,30,60,0.3)" stroke="#334" strokeWidth="2.2" strokeLinecap="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: "#334155", textTransform: "uppercase" }}>Dark</span>
+                  </>
                 )}
               </button>
 
+              {/* Separator */}
+              <div style={{ width: 1, height: 22, background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)", margin: "0 4px" }} />
+
               {/* Get Started CTA */}
-              <a
-                href="#"
+              <a href="#"
                 style={{
-                  marginLeft: 6,
-                  fontSize: 12,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  textDecoration: "none",
-                  fontWeight: 700,
-                  fontFamily: "'DM Mono', monospace",
-                  color: "#050505",
-                  background: "linear-gradient(135deg, #D4A843 0%, #e8c46a 50%, #D4A843 100%)",
+                  marginLeft: 4, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase",
+                  textDecoration: "none", fontWeight: 700, fontFamily: "'DM Mono', monospace",
+                  color: "#0a0a0a",
+                  background: "linear-gradient(135deg, #D4A843 0%, #f0cc6e 50%, #D4A843 100%)",
                   backgroundSize: "200% auto",
-                  padding: "10px 22px",
-                  borderRadius: 9,
-                  boxShadow: "0 0 24px rgba(212,168,67,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  padding: "9px 20px", borderRadius: 8,
+                  boxShadow: "0 2px 16px rgba(212,168,67,0.45)",
                   transition: "box-shadow 0.2s, transform 0.15s, background-position 0.4s",
                   whiteSpace: "nowrap" as const,
                 }}
                 onMouseEnter={e => {
                   const el = e.currentTarget as HTMLAnchorElement;
-                  el.style.boxShadow = "0 0 40px rgba(212,168,67,0.55), inset 0 1px 0 rgba(255,255,255,0.2)";
+                  el.style.boxShadow = "0 4px 28px rgba(212,168,67,0.65)";
                   el.style.transform = "translateY(-2px)";
                   el.style.backgroundPosition = "right center";
                 }}
                 onMouseLeave={e => {
                   const el = e.currentTarget as HTMLAnchorElement;
-                  el.style.boxShadow = "0 0 24px rgba(212,168,67,0.3), inset 0 1px 0 rgba(255,255,255,0.2)";
+                  el.style.boxShadow = "0 2px 16px rgba(212,168,67,0.45)";
                   el.style.transform = "translateY(0)";
                   el.style.backgroundPosition = "left center";
                 }}
-              >
-                Get Started
-              </a>
+              >Get Started</a>
             </nav>
           )}
 
-          {/* Mobile right side */}
+          {/* ── Mobile right side ── */}
           {isMobile && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              {/* Theme toggle mobile */}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <button
                 onClick={() => setDark(d => !d)}
                 aria-label="Toggle theme"
                 style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  width: 34, height: 34, borderRadius: 9,
-                  border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
-                  background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                  cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "6px 11px", borderRadius: 99, cursor: "pointer",
+                  border: dark ? "1.5px solid rgba(212,168,67,0.6)" : "1.5px solid rgba(0,0,0,0.2)",
+                  background: dark ? "rgba(212,168,67,0.12)" : "rgba(0,0,0,0.06)",
                 }}
               >
                 {dark ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="5" />
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2.2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="5" fill="rgba(212,168,67,0.25)" />
                     <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
                     <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
                     <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                   </svg>
                 ) : (
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(30,30,60,0.3)" stroke="#334" strokeWidth="2.2" strokeLinecap="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                   </svg>
                 )}
+                <span style={{ fontSize: 10, fontWeight: 600, color: dark ? "#D4A843" : "#334155" }}>
+                  {dark ? "Light" : "Dark"}
+                </span>
               </button>
-              {/* Hamburger */}
               <button
                 onClick={() => setMenuOpen((v) => !v)}
-                style={{
-                  background: "none", border: "none", cursor: "pointer",
-                  padding: 4, display: "flex", flexDirection: "column", gap: 5,
-                }}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", flexDirection: "column", gap: 5 }}
                 aria-label="Menu"
               >
                 {[0, 1, 2].map((i) => (
                   <div key={i} style={{
                     width: i === 1 ? 20 : 28, height: 2,
-                    background: "#D4A843", borderRadius: 2,
+                    background: dark ? "#D4A843" : "#333", borderRadius: 2,
                     transition: "width 0.3s ease",
                   }} />
                 ))}

@@ -8,6 +8,7 @@ import Nav from './Components/Nav';
 import Header from './Components/Header';
 import Scroll from './Components/scroll';
 import ErrorPage from './Components/ErrorPage';
+import White from './Components/white';
 import './index.css';
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
   {
     path: "header",
     element: <Header />,
+  },
+  {
+    path: "white",
+    element: <White />,
   },
   {
     path: "scroll",
