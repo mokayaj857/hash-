@@ -20,6 +20,11 @@
   --border: rgba(255, 255, 255, 0.12);
   --bg: #060610;
   --surface: rgba(255, 255, 255, 0.04);
+
+  /* Universal spacing — matches scroll.tsx */
+  --page-max-width: var(--page-max-width);
+  --page-side-padding: var(--page-side-padding);
+  --section-padding-v: 96px;
 }
 
 a {
@@ -85,9 +90,9 @@ button:focus-visible {
   border-bottom: 1px solid var(--border);
 }
 .nav-inner {
-  max-width: 1200px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--page-side-padding);
   height: 64px;
   display: flex;
   align-items: center;
@@ -131,12 +136,6 @@ button:focus-visible {
 }
 
 /* ── Whitepaper Hero ── */
-.whitepaper-hero {
-  max-width: 860px;
-  margin: 0 auto;
-  padding: 80px 24px 64px;
-  text-align: center;
-}
 .hero-badge {
   display: inline-block;
   font-size: 12px;
@@ -193,9 +192,9 @@ button:focus-visible {
 
 /* ── Whitepaper Content ── */
 .whitepaper-content {
-  max-width: 760px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: 0 24px 80px;
+  padding: 0 var(--page-side-padding) var(--section-padding-v);
 }
 .wp-section {
   margin-bottom: 48px;
@@ -233,9 +232,9 @@ button:focus-visible {
   background: rgba(6, 6, 16, 0.9);
 }
 .footer-inner {
-  max-width: 1200px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: 24px;
+  padding: var(--page-side-padding);
 }
 .footer-bottom {
   display: flex;
@@ -263,13 +262,13 @@ button:focus-visible {
 
 /* ── Shared Section Layout ── */
 .section {
-  padding: 96px 24px;
+  padding: var(--section-padding-v) var(--page-side-padding);
 }
 .section.arch {
   background: rgba(255, 255, 255, 0.02);
 }
 .section-inner {
-  max-width: 1200px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
 }
 .section-header {
@@ -308,7 +307,7 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 80px 24px;
+  padding: var(--section-padding-v) var(--page-side-padding);
 }
 .hero h1 {
   font-family: var(--font-heading);
@@ -333,7 +332,7 @@ button:focus-visible {
   border-bottom: 1px solid var(--border);
 }
 .trusted-inner {
-  max-width: 1200px;
+  max-width: var(--page-max-width);
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -531,7 +530,7 @@ button:focus-visible {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 24px;
+  padding: var(--page-side-padding);
 }
 .roadmap-item h4 {
   color: #fff;
@@ -591,7 +590,7 @@ button:focus-visible {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 24px;
+  padding: var(--page-side-padding);
   text-align: center;
 }
 .stat-value {

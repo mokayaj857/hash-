@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import ThemeToggle from "../Components/ThemeToggle";
-import { LogoFull } from "../Components/Logo";
+import Footer from "../Components/Footer";
+import Navbar from "../Components/Navbar";
 
 const sections = [
   {
@@ -105,95 +105,66 @@ export default function WhitepaperPage() {
   return (
     <>
       {/* Navigation */}
-      <nav className="nav">
-        <div className="nav-inner">
-          <Link to="/" className="nav-logo">
-            <LogoFull height={32} />
-          </Link>
-          <div className="nav-links">
-            <Link to="/#technology" className="nav-link">Technology</Link>
-            <Link to="/#solutions" className="nav-link">Solutions</Link>
-            <Link to="/#about" className="nav-link">About</Link>
-            <Link to="/#explore" className="nav-link">Explore</Link>
-            <Link to="/whitepaper" className="nav-cta">Whitepaper</Link>
-            <ThemeToggle />
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
-      <section className="whitepaper-hero">
-        <div className="hero-badge">Era Whitepaper</div>
-        <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>
-          Proof-of-Reality for a Post-Deepfake Internet
-        </h1>
-        <p className="hero-sub" style={{ maxWidth: 700, margin: "0 auto 32px" }}>
-          This document describes the Era protocol: how we bind content to devices, enforce
-          identity rights, and use a human oracle to resolve context disputes.
-        </p>
-        <div className="hero-buttons">
-          <a href="/whitepaper.md" download className="btn btn-primary">
-            Download Whitepaper
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}>
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-          </a>
-          <Link to="/" className="btn btn-secondary">
-            Back to Home
-          </Link>
+      <section className="section" style={{ textAlign: "center" }}>
+        <div className="section-inner">
+          <div className="hero-badge">Era Whitepaper</div>
+          <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "clamp(36px, 6vw, 56px)", fontWeight: 700, letterSpacing: "-0.02em", margin: "16px auto", maxWidth: 760 }}>
+            Proof-of-Reality for a Post-Deepfake Internet
+          </h1>
+          <p className="hero-sub" style={{ maxWidth: 640, margin: "0 auto 32px" }}>
+            This document describes the Era protocol: how we bind content to devices, enforce
+            identity rights, and use a human oracle to resolve context disputes.
+          </p>
+          <div className="hero-buttons">
+            <a href="/whitepaper.md" download className="btn btn-primary">
+              Download Whitepaper
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}>
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+              </svg>
+            </a>
+            <Link to="/" className="btn btn-secondary">
+              Back to Home
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Content */}
-      <div className="whitepaper-content">
-        {sections.map((section) => (
-          <section className="wp-section" key={section.title}>
-            <h2>{section.title}</h2>
-            {section.content && <p>{section.content}</p>}
-            {section.bullets && (
-              <ul>
-                {section.bullets.map((item) => (
-                  <li key={item}>{item}</li>
+      <section className="section">
+        <div className="section-inner">
+          {sections.map((section) => (
+            <div className="wp-section" key={section.title}>
+              <h2>{section.title}</h2>
+              {section.content && <p>{section.content}</p>}
+              {section.bullets && (
+                <ul>
+                  {section.bullets.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              )}
+              {section.subsections &&
+                section.subsections.map((sub) => (
+                  <div key={sub.name} style={{ marginTop: 32 }}>
+                    <h3 style={{ fontFamily: "var(--font-heading)", fontSize: 20, fontWeight: 600, marginBottom: 12, color: "var(--accent)" }}>
+                      {sub.name}
+                    </h3>
+                    <ul>
+                      {sub.bullets.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
-            )}
-            {section.subsections &&
-              section.subsections.map((sub) => (
-                <div key={sub.name} style={{ marginTop: 32 }}>
-                  <h3 style={{ fontFamily: "var(--font-heading)", fontSize: 20, fontWeight: 600, marginBottom: 12, color: "var(--accent)" }}>
-                    {sub.name}
-                  </h3>
-                  <ul>
-                    {sub.bullets.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-          </section>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-bottom" style={{ borderTop: "none", paddingTop: 0 }}>
-            <p className="footer-copy">© 2025 Era. If it matters, it&apos;s on Era.</p>
-            <div className="footer-socials">
-              <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                </svg>
-              </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
             </div>
-          </div>
+          ))}
         </div>
-      </footer>
+      </section>
+
+      <Footer />
     </>
   );
 }
