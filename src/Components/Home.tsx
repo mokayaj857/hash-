@@ -16,7 +16,7 @@ const PANELS = [
     rgb: "212,168,67",
     // Add your real video paths here: ["/Videos/clip1.mp4", "/Videos/clip2.mp4"]
     videos: [
-      "/Videos/anime.mp4",
+      "/Videos/run.mp4",
       "/Videos/ofice.mp4",
       "/Videos/think.mp4",
     ],
@@ -28,7 +28,7 @@ const PANELS = [
     accent: "#4A9EDB",
     rgb: "74,158,219",
     videos: [
-      "/Videos/anime.mp4",
+      "/Videos/truth.mp4",
       "/Videos/ofice.mp4",
       "/Videos/think.mp4",
     ],
@@ -40,9 +40,9 @@ const PANELS = [
     accent: "#3EC97A",
     rgb: "62,201,122",
     videos: [
-      "/Videos/anime.mp4",
-      "/Videos/ofice.mp4",
-      "/Videos/think.mp4",
+      "/Videos/cycle.mp4",
+      "/Videos/from.mp4",
+      "/Videos/run.mp4",
     ],
   },
   {
@@ -53,7 +53,7 @@ const PANELS = [
     rgb: "219,74,138",
     videos: [
       "/Videos/anime.mp4",
-      "/Videos/ofice.mp4",
+      "/Videos/cycle.mp4",
       "/Videos/think.mp4",
     ],
   },
@@ -64,14 +64,14 @@ const PANELS = [
     accent: "#9B59E8",
     rgb: "155,89,232",
     videos: [
-      "/Videos/anime.mp4",
+      "/Videos/cycle.mp4",
       "/Videos/ofice.mp4",
-      "/Videos/think.mp4",
+      "/Videos/run.mp4",
     ],
   },
 ];
 
-const NAV = ["Credentials", "Press", "Whitepaper"];
+const NAV = ["Technology", "About", "Whitepaper"];
 
 /* ─── Auto-cycling video + mock colour wave when no src ─── */
 function PanelVideo({
@@ -760,7 +760,7 @@ export default function HashmarkPage() {
               <div style={{ width: 1, height: 22, background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)", margin: "0 4px" }} />
 
               {/* Get Started CTA */}
-              <a href="#"
+              <a href="http://localhost:5173/nav"
                 style={{
                   marginLeft: 4, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase",
                   textDecoration: "none", fontWeight: 700, fontFamily: "'DM Mono', monospace",
