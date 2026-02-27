@@ -6,7 +6,6 @@ type Tab        = "record" | "verify";
 type RecordStep = "idle" | "recording" | "preview" | "signing" | "processing" | "success";
 type VerifyStep = "idle" | "hashing" | "verified" | "failed";
 
-/* ─── helpers ─────────────────────────────────────────────── */
 async function sha256(blob: Blob): Promise<string> {
   const buf  = await blob.arrayBuffer();
   const hash = await crypto.subtle.digest("SHA-256", buf);
@@ -17,7 +16,7 @@ const fakeAddr = () => "0x" + Array.from({length:40},()=>Math.floor(Math.random(
 const short    = (h:string) => h.slice(0,10)+"…"+h.slice(-8);
 const fmt      = (s:number) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 
-/* ─── QR ─────────────────────────────────────────────────── */
+/* ── QR ── */
 function QRCode({data,accent}:{data:string;accent:string}) {
   const S=21;
   const cells:boolean[][]=Array.from({length:S},(_,r)=>
@@ -29,7 +28,7 @@ function QRCode({data,accent}:{data:string;accent:string}) {
   });
   const cell=8;
   return(
-    <svg width={S*cell+24} height={S*cell+24} className="rounded-2xl bg-white p-3 shrink-0">
+    <svg width={S*cell+24} height={S*cell+24} style={{borderRadius:16,background:"#fff",padding:12,flexShrink:0}}>
       {cells.map((row,r)=>row.map((on,c)=>on
         ?<rect key={`${r}-${c}`} x={c*cell+12} y={r*cell+12} width={cell-1} height={cell-1} rx={1} fill={accent}/>
         :null
@@ -38,56 +37,53 @@ function QRCode({data,accent}:{data:string;accent:string}) {
   );
 }
 
-/* ─── Button ─────────────────────────────────────────────── */
-function Btn({children,onClick,disabled=false,gold=false,outline=false,red=false,className="",full=false}:{
+/* ── Button ── */
+function Btn({children,onClick,disabled=false,gold=false,outline=false,red=false,style={},full=false}:{
   children:React.ReactNode;onClick?:()=>void;disabled?:boolean;
-  gold?:boolean;outline?:boolean;red?:boolean;className?:string;full?:boolean;
+  gold?:boolean;outline?:boolean;red?:boolean;style?:React.CSSProperties;full?:boolean;
 }) {
+  const [hov,setHov]=useState(false);
+  const base:React.CSSProperties={
+    position:"relative",display:"flex",alignItems:"center",justifyContent:"center",
+    gap:8,padding:"11px 22px",borderRadius:12,border:"none",cursor:disabled?"not-allowed":"pointer",
+    fontFamily:"'DM Mono',monospace",fontSize:11,letterSpacing:"0.16em",textTransform:"uppercase",
+    transition:"all 0.25s ease",overflow:"hidden",opacity:disabled?0.3:1,
+    width:full?"100%":"auto",flexShrink:0,
+    ...style,
+  };
+  let specific:React.CSSProperties={};
+  if(gold&&!outline) specific={background:hov?"#e2bc52":"#D4A843",color:"#000",boxShadow:hov?"0 0 32px rgba(212,168,67,0.6)":"none"};
+  if(red&&!outline)  specific={background:hov?"#e86060":"#e05252",color:"#fff",boxShadow:hov?"0 0 28px rgba(224,82,82,0.55)":"none"};
+  if(outline&&gold)  specific={background:hov?"rgba(212,168,67,0.1)":"transparent",color:"#D4A843",border:"1px solid rgba(212,168,67,0.4)"};
+  if(outline&&!gold&&!red) specific={background:hov?"rgba(255,255,255,0.06)":"transparent",color:hov?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.55)",border:"1px solid rgba(255,255,255,0.15)"};
   return(
-    <button onClick={onClick} disabled={disabled}
-      className={[
-        "relative flex items-center justify-center gap-2 px-5 py-3 rounded-xl",
-        "font-mono text-[11px] tracking-[0.16em] uppercase transition-all duration-300",
-        "disabled:opacity-30 disabled:cursor-not-allowed overflow-hidden group",
-        full?"w-full":"",
-        gold&&!outline?"bg-[#D4A843] text-black hover:bg-[#e2bc52] hover:shadow-[0_0_32px_rgba(212,168,67,0.6)] active:scale-[0.98]":"",
-        red&&!outline ?"bg-[#e05252] text-white hover:bg-[#e86060] hover:shadow-[0_0_28px_rgba(224,82,82,0.55)] active:scale-[0.98]":"",
-        outline&&gold ?"border border-[#D4A843]/40 text-[#D4A843] hover:bg-[#D4A843]/10 hover:border-[#D4A843]/70":"",
-        outline&&!gold&&!red?"border border-white/15 text-white/55 hover:bg-white/[0.06] hover:text-white/90":"",
-        className,
-      ].filter(Boolean).join(" ")}>
-      {(gold||red)&&!outline&&(
-        <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-white/20 skew-x-[-18deg] transition-transform duration-700 pointer-events-none"/>
-      )}
+    <button onClick={onClick} disabled={disabled} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+      style={{...base,...specific}}>
       {children}
     </button>
   );
 }
 
-/* ─── Field row ──────────────────────────────────────────── */
-function Row({label,value,color="text-white/80"}:{label:string;value:string;color?:string}) {
+/* ── Row ── */
+function Row({label,value,color="#ccc"}:{label:string;value:string;color?:string}) {
   return(
-    <div className="flex justify-between items-start gap-4 py-3 border-b border-white/[0.06] last:border-0">
-      <span className="font-mono text-[10px] text-white/45 tracking-[0.14em] uppercase shrink-0 leading-relaxed">{label}</span>
-      <span className={`font-mono text-[11px] ${color} text-right break-all leading-relaxed`}>{value}</span>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:16,padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+      <span style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.45)",letterSpacing:"0.14em",textTransform:"uppercase",flexShrink:0,lineHeight:1.6}}>{label}</span>
+      <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,color,textAlign:"right",wordBreak:"break-all",lineHeight:1.6}}>{value}</span>
     </div>
   );
 }
 
-/* ─── Glass box ──────────────────────────────────────────── */
-function Glass({children,className=""}:{children:React.ReactNode;className?:string}) {
+/* ── Glass box ── */
+function Glass({children,style={}}:{children:React.ReactNode;style?:React.CSSProperties}) {
   return(
-    <div className={`rounded-2xl ${className}`} style={{
-      background:"rgba(255,255,255,0.04)",
-      border:"1px solid rgba(255,255,255,0.09)",
-      boxShadow:"inset 0 1px 0 rgba(255,255,255,0.06)",
-    }}>{children}</div>
+    <div style={{borderRadius:16,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.06)",...style}}>
+      {children}
+    </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   RECORD TAB
-═══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════ RECORD TAB ════════════════════════════════ */
 function RecordTab() {
   const [step,setStep]         = useState<RecordStep>("idle");
   const [elapsed,setElapsed]   = useState(0);
@@ -120,43 +116,24 @@ function RecordTab() {
     mr.ondataavailable=e=>{if(e.data.size>0)chunksRef.current.push(e.data);};
     mr.onstop=async()=>{
       const blob=new Blob(chunksRef.current,{type:"video/webm"});
-      setVideoURL(URL.createObjectURL(blob));
-      setHash(await sha256(blob));
-      setStep("preview");
+      setVideoURL(URL.createObjectURL(blob));setHash(await sha256(blob));setStep("preview");
     };
     mr.start();mrRef.current=mr;
-    setElapsed(0);
-    timerRef.current=setInterval(()=>setElapsed(s=>s+1),1000);
-    setStep("recording");
+    setElapsed(0);timerRef.current=setInterval(()=>setElapsed(s=>s+1),1000);setStep("recording");
   };
-
   const stopRec=()=>{mrRef.current?.stop();clearInterval(timerRef.current!);};
-
   const sign=()=>{
     if(password.length<6){setPwError(true);return;}
     setPwError(false);setStep("processing");setProgress(0);
     const iv=setInterval(()=>setProgress(p=>{
-      if(p>=100){
-        clearInterval(iv);
-        const tx=fakeTx();
-        setTxHash(tx);
-        setQrData(JSON.stringify({tx,hash,wallet,ts:Date.now()}));
-        setStep("success");
-        return 100;
-      }
+      if(p>=100){clearInterval(iv);const tx=fakeTx();setTxHash(tx);setQrData(JSON.stringify({tx,hash,wallet,ts:Date.now()}));setStep("success");return 100;}
       return p+1.4;
     }),50);
   };
-
-  const download=()=>{
-    if(!videoURL)return;
-    const a=document.createElement("a");a.href=videoURL;a.download=`hashmark_${Date.now()}.webm`;a.click();
-  };
-
+  const download=()=>{if(!videoURL)return;const a=document.createElement("a");a.href=videoURL;a.download=`hashmark_${Date.now()}.webm`;a.click();};
   const reset=()=>{setStep("idle");setVideoURL(null);setHash(null);setTxHash(null);setPassword("");setQrData(null);setProgress(0);};
 
-  /* Step descriptions */
-  const desc:Record<RecordStep,string>={
+  const descriptions:Record<RecordStep,string>={
     idle:      "Point your camera and press Start — every frame will be cryptographically fingerprinted.",
     recording: "Recording in progress. Press Stop when done.",
     preview:   "Review your clip, then authenticate it on-chain.",
@@ -166,72 +143,60 @@ function RecordTab() {
   };
 
   return(
-    <div className="flex flex-col gap-5 h-full">
-
-      {/* Step description */}
-      <p className="font-mono text-[11px] text-white/55 tracking-[0.05em] leading-relaxed shrink-0">
-        {desc[step]}
+    <div style={{display:"flex",flexDirection:"column",gap:18,height:"100%"}}>
+      {/* Description */}
+      <p style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.05em",lineHeight:1.7,flexShrink:0}}>
+        {descriptions[step]}
       </p>
 
-      {/* ── IDLE / RECORDING ── */}
+      {/* IDLE / RECORDING */}
       {(step==="idle"||step==="recording")&&(
-        <div className="flex flex-col gap-4 flex-1 min-h-0">
-          {/* Viewfinder */}
-          <div className={[
-            "relative flex-1 min-h-0 rounded-2xl overflow-hidden transition-all duration-500",
-            step==="recording"
-              ?"ring-2 ring-red-500/60 shadow-[0_0_50px_rgba(239,68,68,0.2)]"
-              :"ring-1 ring-[#D4A843]/25 hover:ring-[#D4A843]/45",
-          ].join(" ")} style={{minHeight:220}}>
-            <video ref={liveRef} muted playsInline
-              className="w-full h-full object-cover block"
-              style={{transform:"scaleX(-1)"}}/>
-            {/* fallback */}
-            <div className="absolute inset-0 -z-10 flex items-center justify-center bg-[#080814]">
-              <span className="font-mono text-[11px] text-white/20 tracking-[0.2em] uppercase">Awaiting Camera</span>
+        <div style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0}}>
+          <div style={{
+            position:"relative",flex:1,minHeight:220,borderRadius:18,overflow:"hidden",
+            boxShadow:step==="recording"?"0 0 50px rgba(239,68,68,0.2)":"none",
+            border:step==="recording"?"2px solid rgba(239,68,68,0.6)":"1px solid rgba(212,168,67,0.25)",
+            transition:"all 0.5s ease",
+          }}>
+            <video ref={liveRef} muted playsInline style={{width:"100%",height:"100%",objectFit:"cover",display:"block",transform:"scaleX(-1)"}}/>
+            <div style={{position:"absolute",inset:0,zIndex:-1,display:"flex",alignItems:"center",justifyContent:"center",background:"#080814"}}>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.18)",letterSpacing:"0.2em",textTransform:"uppercase"}}>Awaiting Camera</span>
             </div>
-
-            {/* Scan beam */}
             {step==="recording"&&(
               <>
-                <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-red-500/[0.07] via-transparent to-red-500/[0.07]"/>
-                <div className="absolute left-0 right-0 h-[2px] pointer-events-none"
-                  style={{background:"linear-gradient(90deg,transparent,rgba(239,68,68,0.95),transparent)",boxShadow:"0 0 20px rgba(239,68,68,1)",animation:"scanBeam 2.2s linear infinite"}}/>
+                <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"linear-gradient(to bottom,rgba(239,68,68,0.07) 0%,transparent 30%,transparent 70%,rgba(239,68,68,0.07) 100%)"}}/>
+                <div style={{position:"absolute",left:0,right:0,height:2,pointerEvents:"none",background:"linear-gradient(90deg,transparent,rgba(239,68,68,0.95),transparent)",boxShadow:"0 0 20px rgba(239,68,68,1)",animation:"scanBeam 2.2s linear infinite"}}/>
               </>
             )}
-
             {/* Corner brackets */}
             {(["tl","tr","bl","br"] as const).map(p=>(
-              <div key={p} className="absolute w-5 h-5 pointer-events-none" style={{
+              <div key={p} style={{
+                position:"absolute",width:20,height:20,pointerEvents:"none",
                 ...(p.includes("t")?{top:12}:{bottom:12}),
                 ...(p.includes("l")?{left:12}:{right:12}),
-                borderTop:    p.includes("t")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
-                borderBottom: p.includes("b")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
-                borderLeft:   p.includes("l")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
-                borderRight:  p.includes("r")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
+                borderTop:   p.includes("t")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
+                borderBottom:p.includes("b")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
+                borderLeft:  p.includes("l")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
+                borderRight: p.includes("r")?`1.5px solid ${step==="recording"?"rgba(239,68,68,0.85)":"rgba(212,168,67,0.7)"}`:"none",
               }}/>
             ))}
-
-            {/* REC badge */}
             {step==="recording"&&(
-              <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-red-500/45">
-                <div className="w-2 h-2 rounded-full bg-red-500" style={{animation:"blink 1s ease-in-out infinite"}}/>
-                <span className="font-mono text-[11px] text-white tracking-widest font-medium">REC {fmt(elapsed)}</span>
+              <div style={{position:"absolute",top:12,left:12,display:"flex",alignItems:"center",gap:8,padding:"6px 14px",borderRadius:99,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(12px)",border:"1px solid rgba(239,68,68,0.45)"}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",animation:"blink 1s ease-in-out infinite"}}/>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"#fff",letterSpacing:"0.1em",fontWeight:500}}>REC {fmt(elapsed)}</span>
               </div>
             )}
           </div>
-
-          {/* Controls */}
-          <div className="flex justify-center shrink-0">
+          <div style={{display:"flex",justifyContent:"center",flexShrink:0}}>
             {step==="idle"&&(
-              <Btn red onClick={startRec} className="px-12 gap-3">
-                <span className="w-3 h-3 rounded-full bg-white/30 shrink-0"/>
+              <Btn red onClick={startRec} style={{padding:"12px 48px",gap:10}}>
+                <span style={{width:10,height:10,borderRadius:"50%",background:"rgba(0,0,0,0.3)",display:"inline-block",flexShrink:0}}/>
                 Start Recording
               </Btn>
             )}
             {step==="recording"&&(
-              <Btn outline onClick={stopRec} className="px-12 !border-red-500/45 !text-red-400 hover:!bg-red-500/10">
-                <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+              <Btn outline onClick={stopRec} style={{padding:"12px 48px",gap:10,borderColor:"rgba(239,68,68,0.45)",color:"#f87171"}}>
+                <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" style={{flexShrink:0}}><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
                 Stop Recording
               </Btn>
             )}
@@ -239,148 +204,133 @@ function RecordTab() {
         </div>
       )}
 
-      {/* ── PREVIEW ── */}
+      {/* PREVIEW */}
       {step==="preview"&&videoURL&&(
-        <div className="flex flex-col gap-4 flex-1 min-h-0" style={{animation:"fadeUp 0.5s ease both"}}>
-          <div className="relative flex-1 min-h-0 rounded-2xl overflow-hidden ring-1 ring-emerald-500/35" style={{minHeight:180}}>
-            <video src={videoURL} controls className="w-full h-full object-cover block"/>
-            <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-emerald-500/45">
-              <span className="font-mono text-[10px] text-emerald-400 tracking-widest font-medium">✓ CAPTURED</span>
+        <div style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0,animation:"fadeUp 0.5s ease both"}}>
+          <div style={{position:"relative",flex:1,minHeight:180,borderRadius:18,overflow:"hidden",border:"1px solid rgba(52,211,153,0.35)"}}>
+            <video src={videoURL} controls style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+            <div style={{position:"absolute",top:12,right:12,padding:"4px 12px",borderRadius:99,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(12px)",border:"1px solid rgba(52,211,153,0.45)"}}>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"#34d399",letterSpacing:"0.12em",fontWeight:500}}>✓ CAPTURED</span>
             </div>
           </div>
-          <Glass className="p-4">
-            <div className="font-mono text-[10px] text-emerald-400/70 tracking-[0.18em] uppercase mb-2 font-medium">SHA-256 Fingerprint</div>
-            <div className="font-mono text-[10px] text-white/55 break-all leading-relaxed">{hash}</div>
+          <Glass style={{padding:16}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.7)",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:8,fontWeight:500}}>SHA-256 Fingerprint</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.5)",wordBreak:"break-all",lineHeight:1.7}}>{hash}</div>
           </Glass>
-          <div className="flex gap-3 shrink-0">
-            <Btn outline onClick={reset} className="flex-1">Re-record</Btn>
-            <Btn gold onClick={()=>setStep("signing")} className="flex-[2]">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div style={{display:"flex",gap:12,flexShrink:0}}>
+            <Btn outline onClick={reset} style={{flex:1}}>Re-record</Btn>
+            <Btn gold onClick={()=>setStep("signing")} style={{flex:2,gap:10}}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               Authenticate on Blockchain
             </Btn>
           </div>
         </div>
       )}
 
-      {/* ── SIGNING ── */}
+      {/* SIGNING */}
       {step==="signing"&&(
-        <div className="flex flex-col gap-5 flex-1" style={{animation:"fadeUp 0.5s ease both"}}>
-          <Glass className="p-5">
-            <div className="font-mono text-[10px] text-[#D4A843]/65 tracking-[0.2em] uppercase mb-3 font-medium">Transaction Details</div>
-            <Row label="Action"   value="Authenticate Media"  color="text-white/85"/>
-            <Row label="Hash"     value={short(hash||"")}     color="text-[#D4A843]"/>
-            <Row label="Wallet"   value={short(wallet)}       color="text-[#4A9EDB]"/>
-            <Row label="Network"  value="Hashmark AppChain"   color="text-emerald-400"/>
-            <Row label="Est. Gas" value="≈ 0.0003 HMK"        color="text-white/60"/>
+        <div style={{display:"flex",flexDirection:"column",gap:18,flex:1,animation:"fadeUp 0.5s ease both"}}>
+          <Glass style={{padding:20}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(212,168,67,0.65)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:12,fontWeight:500}}>Transaction Details</div>
+            <Row label="Action"   value="Authenticate Media"  color="#ccc"/>
+            <Row label="Hash"     value={short(hash||"")}     color="#D4A843"/>
+            <Row label="Wallet"   value={short(wallet)}       color="#4A9EDB"/>
+            <Row label="Network"  value="Hashmark AppChain"   color="#34d399"/>
+            <Row label="Est. Gas" value="≈ 0.0003 HMK"        color="rgba(255,255,255,0.55)"/>
           </Glass>
-
           <div>
-            <label className="block font-mono text-[10px] text-white/55 tracking-[0.16em] uppercase mb-2 font-medium">
+            <label style={{display:"block",fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.55)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8,fontWeight:500}}>
               Wallet Password
             </label>
             <input
               type="password" value={password}
               onChange={e=>{setPassword(e.target.value);setPwError(false);}}
               placeholder="Enter password to sign…"
-              className={[
-                "w-full px-4 py-3 rounded-xl font-mono text-[13px] text-white outline-none transition-all duration-300",
-                "placeholder:text-white/25",
-                pwError
-                  ?"bg-red-500/[0.07] border border-red-500/55 focus:border-red-400/80"
-                  :"bg-white/[0.05] border border-white/12 focus:border-[#D4A843]/50 focus:bg-[#D4A843]/[0.04]",
-              ].join(" ")}
+              style={{
+                width:"100%",padding:"12px 16px",borderRadius:12,
+                background:pwError?"rgba(239,68,68,0.07)":"rgba(255,255,255,0.05)",
+                border:pwError?"1px solid rgba(239,68,68,0.55)":"1px solid rgba(255,255,255,0.12)",
+                color:"#fff",fontFamily:"'DM Mono',monospace",fontSize:13,outline:"none",
+                boxSizing:"border-box",transition:"all 0.3s ease",
+              }}
             />
-            {pwError&&<p className="mt-2 font-mono text-[10px] text-red-400 tracking-[0.1em]">Minimum 6 characters required</p>}
+            {pwError&&<p style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"#f87171",marginTop:6,letterSpacing:"0.1em"}}>Minimum 6 characters required</p>}
           </div>
-
-          <div className="flex gap-3 mt-auto">
-            <Btn outline onClick={()=>setStep("preview")} className="flex-1">Back</Btn>
-            <Btn gold onClick={sign} className="flex-[2]">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <div style={{display:"flex",gap:12,marginTop:"auto",flexShrink:0}}>
+            <Btn outline onClick={()=>setStep("preview")} style={{flex:1}}>Back</Btn>
+            <Btn gold onClick={sign} style={{flex:2,gap:10}}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0}}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
               Sign & Authenticate
             </Btn>
           </div>
         </div>
       )}
 
-      {/* ── PROCESSING ── */}
+      {/* PROCESSING */}
       {step==="processing"&&(
-        <div className="flex flex-col items-center justify-center flex-1 gap-8" style={{animation:"fadeUp 0.5s ease both"}}>
-          <div className="relative w-28 h-28">
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flex:1,gap:28,animation:"fadeUp 0.5s ease both"}}>
+          <div style={{position:"relative",width:112,height:112}}>
             {[0,1,2].map(i=>(
-              <div key={i} className="absolute rounded-full border-2" style={{
-                inset:i*14,
+              <div key={i} style={{
+                position:"absolute",inset:i*14,borderRadius:"50%",border:"2px solid",
                 borderColor:`rgba(${["212,168,67","74,158,219","155,89,232"][i]},0.15)`,
                 borderTopColor:`rgba(${["212,168,67","74,158,219","155,89,232"][i]},1)`,
                 animation:`spin ${1+i*0.45}s linear infinite`,
               }}/>
             ))}
-            <div className="absolute inset-0 flex items-center justify-center font-mono text-[15px] font-bold text-[#D4A843]">
+            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Mono',monospace",fontSize:15,fontWeight:700,color:"#D4A843"}}>
               {Math.round(progress)}%
             </div>
           </div>
-          <div className="text-center space-y-2">
-            <div className="font-serif text-2xl font-light text-white">Anchoring to Ledger</div>
-            <div className="font-mono text-[11px] text-white/50 tracking-[0.1em]">
-              {progress<30?"Computing cryptographic fingerprint…"
-               :progress<60?"Broadcasting to AppChain nodes…"
-               :progress<85?"Awaiting block confirmation…"
-               :"Sealing immutable record…"}
+          <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:24,fontWeight:300,color:"#fff"}}>Anchoring to Ledger</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.1em"}}>
+              {progress<30?"Computing cryptographic fingerprint…":progress<60?"Broadcasting to AppChain nodes…":progress<85?"Awaiting block confirmation…":"Sealing immutable record…"}
             </div>
           </div>
-          <div className="w-full h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
-            <div className="h-full rounded-full"
-              style={{width:`${progress}%`,background:"linear-gradient(90deg,#D4A843,#9B59E8)",boxShadow:"0 0 14px rgba(212,168,67,0.7)",transition:"width 0.08s linear"}}/>
+          <div style={{width:"100%",height:3,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${progress}%`,background:"linear-gradient(90deg,#D4A843,#9B59E8)",boxShadow:"0 0 14px rgba(212,168,67,0.7)",transition:"width 0.08s linear",borderRadius:4}}/>
           </div>
         </div>
       )}
 
-      {/* ── SUCCESS ── */}
+      {/* SUCCESS */}
       {step==="success"&&qrData&&txHash&&hash&&(
-        <div className="flex flex-col gap-5 flex-1 overflow-y-auto" style={{animation:"fadeUp 0.6s ease both"}}>
-          {/* Success header */}
-          <div className="flex items-center gap-4 p-4 rounded-2xl"
-            style={{background:"rgba(62,201,122,0.08)",border:"1.5px solid rgba(62,201,122,0.3)",boxShadow:"0 0 36px rgba(62,201,122,0.1)"}}>
-            <div className="w-12 h-12 shrink-0 rounded-full flex items-center justify-center text-2xl"
-              style={{background:"rgba(62,201,122,0.15)",border:"2px solid rgba(62,201,122,0.5)",boxShadow:"0 0 24px rgba(62,201,122,0.35)",animation:"popIn 0.5s cubic-bezier(0.4,0,0.2,1) both"}}>
-              ✓
-            </div>
+        <div style={{display:"flex",flexDirection:"column",gap:18,flex:1,overflowY:"auto",animation:"fadeUp 0.6s ease both"}}>
+          <div style={{display:"flex",alignItems:"center",gap:16,padding:16,borderRadius:18,background:"rgba(52,211,153,0.08)",border:"1.5px solid rgba(52,211,153,0.3)",boxShadow:"0 0 36px rgba(52,211,153,0.1)"}}>
+            <div style={{width:48,height:48,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(52,211,153,0.15)",border:"2px solid rgba(52,211,153,0.5)",boxShadow:"0 0 24px rgba(52,211,153,0.35)",animation:"popIn 0.5s cubic-bezier(0.4,0,0.2,1) both"}}>✓</div>
             <div>
-              <div className="font-serif text-xl font-light text-emerald-400 mb-0.5">Successfully Authenticated</div>
-              <div className="font-mono text-[10px] text-emerald-400/55 tracking-[0.1em]">Permanently sealed on the Hashmark ledger</div>
+              <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:22,fontWeight:300,color:"#34d399",marginBottom:4}}>Successfully Authenticated</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.55)",letterSpacing:"0.1em"}}>Permanently sealed on the Hashmark ledger</div>
             </div>
           </div>
-
-          {/* QR + info */}
-          <div className="flex gap-5 flex-wrap items-start">
-            <div className="flex flex-col items-center gap-2 shrink-0">
-              <QRCode data={qrData} accent="#3EC97A"/>
-              <span className="font-mono text-[9px] text-white/35 tracking-[0.14em] uppercase">Scan to verify</span>
+          <div style={{display:"flex",gap:18,flexWrap:"wrap",alignItems:"flex-start"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,flexShrink:0}}>
+              <QRCode data={qrData} accent="#34d399"/>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.14em",textTransform:"uppercase"}}>Scan to verify</span>
             </div>
-            <Glass className="flex-1 min-w-[180px] p-4">
-              <Row label="TX Hash"    value={short(txHash)} color="text-[#4A9EDB]"/>
-              <Row label="Video Hash" value={short(hash)}   color="text-[#D4A843]"/>
-              <Row label="Wallet"     value={short(wallet)} color="text-[#9B59E8]"/>
-              <Row label="Network"    value="Hashmark AppChain" color="text-emerald-400"/>
-              <Row label="Timestamp"  value={new Date().toISOString().slice(0,19).replace("T"," ")} color="text-white/65"/>
-              <Row label="Status"     value="Immutable ✓"  color="text-emerald-400"/>
+            <Glass style={{flex:1,minWidth:180,padding:16}}>
+              <Row label="TX Hash"    value={short(txHash)} color="#4A9EDB"/>
+              <Row label="Video Hash" value={short(hash)}   color="#D4A843"/>
+              <Row label="Wallet"     value={short(wallet)} color="#9B59E8"/>
+              <Row label="Network"    value="Hashmark AppChain" color="#34d399"/>
+              <Row label="Timestamp"  value={new Date().toISOString().slice(0,19).replace("T"," ")} color="rgba(255,255,255,0.6)"/>
+              <Row label="Status"     value="Immutable ✓"  color="#34d399"/>
             </Glass>
           </div>
-
-          {/* Actions */}
-          <div className="flex gap-2.5 flex-wrap shrink-0">
-            <Btn gold onClick={download} className="flex-1 min-w-[120px]">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap",flexShrink:0}}>
+            <Btn gold onClick={download} style={{flex:1,minWidth:110,gap:8}}>
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0}}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Download
             </Btn>
             <Btn gold outline onClick={()=>{
-              const blob=new Blob([JSON.stringify({txHash,hash,wallet,ts:new Date().toISOString()},null,2)],{type:"application/json"});
-              const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="hashmark_cert.json";a.click();
-            }} className="flex-1 min-w-[120px]">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              const b=new Blob([JSON.stringify({txHash,hash,wallet,ts:new Date().toISOString()},null,2)],{type:"application/json"});
+              const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="hashmark_cert.json";a.click();
+            }} style={{flex:1,minWidth:120,gap:8}}>
+              <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Certificate
             </Btn>
-            <Btn outline onClick={reset} className="flex-1 min-w-[90px]">New</Btn>
+            <Btn outline onClick={reset} style={{flex:1,minWidth:90}}>New</Btn>
           </div>
         </div>
       )}
@@ -388,9 +338,7 @@ function RecordTab() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   VERIFY TAB
-═══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════ VERIFY TAB ════════════════════════════════ */
 function VerifyTab() {
   const [step,setStep]         = useState<VerifyStep>("idle");
   const [drag,setDrag]         = useState(false);
@@ -411,114 +359,113 @@ function VerifyTab() {
   const reset=()=>{setStep("idle");setHash(null);setFileName(null);setVideoURL(null);};
 
   return(
-    <div className="flex flex-col gap-5 flex-1 min-h-0">
+    <div style={{display:"flex",flexDirection:"column",gap:18,flex:1,minHeight:0}}>
 
-      {/* ── DROP ZONE ── */}
+      {/* DROP ZONE */}
       {step==="idle"&&(
         <div
           onDragOver={e=>{e.preventDefault();setDrag(true);}}
           onDragLeave={()=>setDrag(false)}
           onDrop={e=>{e.preventDefault();setDrag(false);const f=e.dataTransfer.files[0];if(f)processFile(f);}}
           onClick={()=>inputRef.current?.click()}
-          className={[
-            "flex-1 flex flex-col items-center justify-center gap-6 rounded-2xl cursor-pointer transition-all duration-400",
-            drag
-              ?"border-2 border-dashed border-[#D4A843] bg-[#D4A843]/[0.06] scale-[1.01] shadow-[0_0_40px_rgba(212,168,67,0.18)]"
-              :"border-2 border-dashed border-white/[0.1] hover:border-[#D4A843]/40 hover:bg-[#D4A843]/[0.03]",
-          ].join(" ")} style={{minHeight:200,animation:"fadeUp 0.5s ease both"}}>
-          <input ref={inputRef} type="file" accept="video/*" className="hidden"
+          style={{
+            flex:1,minHeight:200,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+            gap:24,borderRadius:18,cursor:"pointer",transition:"all 0.3s ease",
+            border:drag?"2px dashed #D4A843":"2px dashed rgba(255,255,255,0.1)",
+            background:drag?"rgba(212,168,67,0.06)":"transparent",
+            boxShadow:drag?"0 0 40px rgba(212,168,67,0.18)":"none",
+            transform:drag?"scale(1.01)":"scale(1)",
+            animation:"fadeUp 0.5s ease both",
+          }}>
+          <input ref={inputRef} type="file" accept="video/*" style={{display:"none"}}
             onChange={e=>{const f=e.target.files?.[0];if(f)processFile(f);}}/>
-
-          <div className={[
-            "w-20 h-20 rounded-full flex items-center justify-center text-3xl transition-all duration-400",
-            drag?"bg-[#D4A843]/20 border-2 border-[#D4A843]/55 scale-110 shadow-[0_0_44px_rgba(212,168,67,0.45)]":"bg-white/[0.05] border border-white/10",
-          ].join(" ")} style={{animation:drag?"none":"breathe 4s ease-in-out infinite"}}>
-            🎬
+          <div style={{
+            width:80,height:80,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:32,transition:"all 0.3s ease",
+            background:drag?"rgba(212,168,67,0.2)":"rgba(255,255,255,0.04)",
+            border:drag?"2px solid rgba(212,168,67,0.55)":"1px solid rgba(255,255,255,0.1)",
+            boxShadow:drag?"0 0 44px rgba(212,168,67,0.45)":"none",
+            animation:drag?"none":"breathe 4s ease-in-out infinite",
+          }}>🎬</div>
+          <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8,padding:"0 16px"}}>
+            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:22,fontWeight:300,color:"#fff"}}>Drop your video to verify</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.4)",letterSpacing:"0.16em"}}>OR CLICK TO BROWSE — MP4, WEBM, MOV</div>
           </div>
-
-          <div className="text-center space-y-2 px-4">
-            <div className="font-serif text-[22px] font-light text-white">Drop your video to verify</div>
-            <div className="font-mono text-[10px] text-white/40 tracking-[0.16em]">OR CLICK TO BROWSE — MP4, WEBM, MOV</div>
-          </div>
-
-          <div className="flex items-center gap-5 flex-wrap justify-center px-4">
+          <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap",justifyContent:"center",padding:"0 16px"}}>
             {["SHA-256 Hashed","Blockchain Verified","Tamper-Proof"].map(t=>(
-              <div key={t} className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#D4A843]/65"/>
-                <span className="font-mono text-[9px] text-white/40 tracking-[0.1em] uppercase">{t}</span>
+              <div key={t} style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:"rgba(212,168,67,0.65)"}}/>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"rgba(255,255,255,0.38)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{t}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* ── HASHING ── */}
+      {/* HASHING */}
       {step==="hashing"&&(
-        <div className="flex-1 flex flex-col items-center justify-center gap-8" style={{animation:"fadeUp 0.5s ease both"}}>
-          <div className="relative w-24 h-24">
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:28,animation:"fadeUp 0.5s ease both"}}>
+          <div style={{position:"relative",width:96,height:96}}>
             {[0,1].map(i=>(
-              <div key={i} className="absolute rounded-full border-2" style={{
-                inset:i*16,
+              <div key={i} style={{
+                position:"absolute",inset:i*16,borderRadius:"50%",border:"2px solid",
                 borderColor:`rgba(${["212,168,67","155,89,232"][i]},0.15)`,
                 borderTopColor:`rgba(${["212,168,67","155,89,232"][i]},1)`,
                 animation:`spin ${1+i*0.55}s linear infinite`,
               }}/>
             ))}
-            <div className="absolute inset-0 flex items-center justify-center text-2xl">🔍</div>
+            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>🔍</div>
           </div>
-          <div className="text-center">
-            <div className="font-serif text-[22px] font-light text-white mb-2">Analysing Video</div>
-            <div className="font-mono text-[11px] text-white/45 tracking-[0.1em]">Computing SHA-256 · Querying ledger…</div>
+          <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:22,fontWeight:300,color:"#fff"}}>Analysing Video</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.4)",letterSpacing:"0.1em"}}>Computing SHA-256 · Querying ledger…</div>
           </div>
-          {hash&&<div className="font-mono text-[9px] text-white/25 max-w-xs text-center break-all leading-relaxed px-4">{hash}</div>}
+          {hash&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"rgba(255,255,255,0.2)",maxWidth:300,textAlign:"center",wordBreak:"break-all",lineHeight:1.7,padding:"0 16px"}}>{hash}</div>}
         </div>
       )}
 
-      {/* ── VERIFIED ── */}
+      {/* VERIFIED */}
       {step==="verified"&&hash&&(
-        <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto" style={{animation:"fadeUp 0.5s ease both"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0,overflowY:"auto",animation:"fadeUp 0.5s ease both"}}>
           {videoURL&&(
-            <div className="rounded-2xl overflow-hidden ring-1 ring-emerald-500/35 shrink-0" style={{maxHeight:190}}>
-              <video src={videoURL} controls className="w-full block object-cover"/>
+            <div style={{borderRadius:18,overflow:"hidden",border:"1px solid rgba(52,211,153,0.35)",flexShrink:0,maxHeight:190}}>
+              <video src={videoURL} controls style={{width:"100%",display:"block",objectFit:"cover"}}/>
             </div>
           )}
-          <div className="flex items-center gap-4 p-4 rounded-2xl"
-            style={{background:"rgba(62,201,122,0.07)",border:"1.5px solid rgba(62,201,122,0.28)",boxShadow:"0 0 30px rgba(62,201,122,0.09)"}}>
-            <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0"
-              style={{background:"rgba(62,201,122,0.13)",border:"2px solid rgba(62,201,122,0.45)",animation:"popIn 0.4s cubic-bezier(0.4,0,0.2,1) both"}}>✓</div>
+          <div style={{display:"flex",alignItems:"center",gap:16,padding:16,borderRadius:18,background:"rgba(52,211,153,0.07)",border:"1.5px solid rgba(52,211,153,0.28)",boxShadow:"0 0 30px rgba(52,211,153,0.09)"}}>
+            <div style={{width:44,height:44,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:"rgba(52,211,153,0.13)",border:"2px solid rgba(52,211,153,0.45)",animation:"popIn 0.4s cubic-bezier(0.4,0,0.2,1) both"}}>✓</div>
             <div>
-              <div className="font-serif text-[18px] font-light text-emerald-400 mb-0.5">Authenticity Verified</div>
-              <div className="font-mono text-[10px] text-emerald-400/55 tracking-[0.08em]">{fileName} — found on Hashmark ledger</div>
+              <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:20,fontWeight:300,color:"#34d399",marginBottom:4}}>Authenticity Verified</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.55)",letterSpacing:"0.08em"}}>{fileName} — found on Hashmark ledger</div>
             </div>
           </div>
-          <Glass className="p-4">
-            <div className="font-mono text-[10px] text-white/35 tracking-[0.2em] uppercase mb-3 font-medium">Blockchain Record</div>
-            <Row label="SHA-256"     value={hash}           color="text-[#D4A843]"/>
-            <Row label="TX Hash"     value={short(txHash)}  color="text-[#4A9EDB]"/>
-            <Row label="Recorded By" value={short(wallet)}  color="text-[#9B59E8]"/>
-            <Row label="Network"     value="Hashmark AppChain" color="text-emerald-400"/>
-            <Row label="Recorded"    value="2025-01-15 14:32:08 UTC" color="text-white/65"/>
-            <Row label="Block"       value="#4,872,341"     color="text-white/65"/>
+          <Glass style={{padding:16}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:12,fontWeight:500}}>Blockchain Record</div>
+            <Row label="SHA-256"     value={hash}           color="#D4A843"/>
+            <Row label="TX Hash"     value={short(txHash)}  color="#4A9EDB"/>
+            <Row label="Recorded By" value={short(wallet)}  color="#9B59E8"/>
+            <Row label="Network"     value="Hashmark AppChain" color="#34d399"/>
+            <Row label="Recorded"    value="2025-01-15 14:32:08 UTC" color="rgba(255,255,255,0.6)"/>
+            <Row label="Block"       value="#4,872,341"     color="rgba(255,255,255,0.6)"/>
           </Glass>
           <Btn outline onClick={reset} full>Verify Another</Btn>
         </div>
       )}
 
-      {/* ── FAILED ── */}
+      {/* FAILED */}
       {step==="failed"&&(
-        <div className="flex-1 flex flex-col items-center justify-center gap-6" style={{animation:"fadeUp 0.5s ease both"}}>
-          <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl"
-            style={{background:"rgba(219,74,74,0.1)",border:"2px solid rgba(219,74,74,0.45)",boxShadow:"0 0 32px rgba(219,74,74,0.2)"}}>✕</div>
-          <div className="text-center space-y-2 px-4">
-            <div className="font-serif text-2xl text-red-400">Not Verified</div>
-            <div className="font-mono text-[11px] text-white/50 tracking-[0.06em] max-w-[280px] leading-relaxed">
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24,animation:"fadeUp 0.5s ease both"}}>
+          <div style={{width:64,height:64,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,background:"rgba(219,74,74,0.1)",border:"2px solid rgba(219,74,74,0.45)",boxShadow:"0 0 32px rgba(219,74,74,0.2)"}}>✕</div>
+          <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8,padding:"0 16px"}}>
+            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:26,color:"#f87171"}}>Not Verified</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.06em",maxWidth:280,lineHeight:1.7}}>
               This video was not found on the Hashmark ledger or has been altered since authentication.
             </div>
           </div>
           {hash&&(
-            <Glass className="w-full p-4">
-              <div className="font-mono text-[10px] text-red-400/55 tracking-[0.16em] uppercase mb-2 font-medium">Computed Hash</div>
-              <div className="font-mono text-[10px] text-white/40 break-all leading-relaxed">{hash}</div>
+            <Glass style={{width:"100%",padding:16}}>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(248,113,113,0.55)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8,fontWeight:500}}>Computed Hash</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.38)",wordBreak:"break-all",lineHeight:1.7}}>{hash}</div>
             </Glass>
           )}
           <Btn red onClick={reset}>Try Another Video</Btn>
@@ -528,22 +475,19 @@ function VerifyTab() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   ROOT
-═══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════ ROOT ════════════════════════════════ */
 export default function HashmarkApp() {
   const [tab,setTab] = useState<Tab>("record");
-  const BG_VIDEO     = "/videos/hashmark-bg.mp4"; // ← your video path
+  const BG_VIDEO     = "/videos/hashmark-bg.mp4";
 
   return(
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap');
-        .font-serif{font-family:'Cormorant Garamond',Georgia,serif;}
-        .font-mono{font-family:'DM Mono',monospace;}
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         html,body,#root,#__next{width:100%;height:100%;background:#060610;-webkit-font-smoothing:antialiased;}
         body{overflow:hidden;}
+        input{font-family:'DM Mono',monospace;}
         input::placeholder{color:rgba(255,255,255,0.22);}
         ::-webkit-scrollbar{width:3px;}
         ::-webkit-scrollbar-thumb{background:rgba(212,168,67,0.25);border-radius:4px;}
@@ -557,126 +501,110 @@ export default function HashmarkApp() {
         @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
       `}</style>
 
-      {/* ══ Background video ══ */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
+      {/* Background video */}
+      <div style={{position:"fixed",inset:0,zIndex:0,overflow:"hidden"}}>
         <video autoPlay muted loop playsInline src={BG_VIDEO}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{filter:"brightness(0.22) saturate(1.4)"}}/>
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0c0820]/75 via-transparent to-black/60"/>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#060610]/85 via-transparent to-transparent"/>
-        <div className="absolute inset-0" style={{background:"radial-gradient(ellipse at 50% 0%, rgba(212,168,67,0.055) 0%, transparent 55%)"}}/>
+          style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",filter:"brightness(0.22) saturate(1.4)"}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(12,8,32,0.75) 0%,transparent 50%,rgba(0,0,0,0.6) 100%)"}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(6,6,16,0.85) 0%,transparent 50%)"}}/>
+        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% 0%,rgba(212,168,67,0.055) 0%,transparent 55%)"}}/>
       </div>
 
-      {/* ══ Full-screen layout ══ */}
-      <div className="fixed inset-0 z-10 flex flex-col items-center overflow-hidden">
+      {/* Full-screen layout */}
+      <div style={{position:"fixed",inset:0,zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",overflow:"hidden"}}>
 
-        {/* ─── LOGO HEADER — outside the card ─── */}
-        <header
-          className="w-full shrink-0 flex items-center justify-between px-6 sm:px-10 py-4"
-          style={{animation:"logoIn 0.8s cubic-bezier(0.4,0,0.2,1) both 0.05s"}}
-        >
-          {/* Left: Hash logo + wordmark + badge */}
-          <div className="flex items-center gap-3">
-            {/* Icon box */}
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{background:"rgba(212,168,67,0.1)",border:"1px solid rgba(212,168,67,0.22)"}}>
+        {/* ── LOGO HEADER outside card ── */}
+        <header style={{
+          width:"100%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between",
+          padding:"16px 24px",
+          animation:"logoIn 0.8s cubic-bezier(0.4,0,0.2,1) both 0.05s",
+        }}>
+          {/* Left: icon + wordmark */}
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:36,height:36,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"rgba(212,168,67,0.1)",border:"1px solid rgba(212,168,67,0.22)"}}>
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                <line x1="6"  y1="2"  x2="4"  y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
-                <line x1="13" y1="2"  x2="11" y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
-                <line x1="2"  y1="7"  x2="18" y2="7"  stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
-                <line x1="1.5"y1="13" x2="17.5"y2="13"stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
+                <line x1="6"  y1="2"  x2="4"   y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
+                <line x1="13" y1="2"  x2="11"  y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
+                <line x1="2"  y1="7"  x2="18"  y2="7"  stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
+                <line x1="1.5"y1="13" x2="17.5"y2="13" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
               </svg>
             </div>
-            {/* Wordmark */}
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-[15px] tracking-[0.3em] text-white uppercase leading-none">HASHMARK</span>
-              <span className="font-mono text-[8px] tracking-[0.16em] text-[#D4A843] px-2 py-[3px] border border-[#D4A843]/28 rounded-md bg-[#D4A843]/[0.08] uppercase leading-none">
-                PROTOCOL
-              </span>
+            <div style={{display:"flex",alignItems:"baseline",gap:10}}>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:15,letterSpacing:"0.3em",color:"rgba(255,255,255,0.92)",textTransform:"uppercase",lineHeight:1}}>HASHMARK</span>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:8,letterSpacing:"0.16em",color:"#D4A843",padding:"3px 8px",border:"1px solid rgba(212,168,67,0.28)",borderRadius:6,background:"rgba(212,168,67,0.08)",textTransform:"uppercase",lineHeight:1}}>PROTOCOL</span>
             </div>
           </div>
-
-          {/* Right: Ledger Live status */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-            style={{background:"rgba(62,201,122,0.08)",border:"1px solid rgba(62,201,122,0.2)"}}>
-            <div className="w-[5px] h-[5px] rounded-full bg-emerald-400 shrink-0"
-              style={{animation:"blink 2s ease-in-out infinite"}}/>
-            <span className="font-mono text-[9px] text-emerald-400 tracking-[0.18em] uppercase">Ledger Live</span>
+          {/* Right: Ledger Live */}
+          <div style={{display:"flex",alignItems:"center",gap:7,padding:"6px 14px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
+            <div style={{width:5,height:5,borderRadius:"50%",background:"#34d399",flexShrink:0,animation:"blink 2s ease-in-out infinite"}}/>
+            <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#34d399",letterSpacing:"0.18em",textTransform:"uppercase"}}>Ledger Live</span>
           </div>
         </header>
 
-        {/* Thin gold rule under header */}
-        <div className="w-full shrink-0 px-6 sm:px-10">
-          <div className="h-[1px]" style={{background:"linear-gradient(90deg,transparent,rgba(212,168,67,0.2) 35%,rgba(155,89,232,0.15) 70%,transparent)"}}/>
+        {/* Thin divider rule */}
+        <div style={{width:"100%",flexShrink:0,padding:"0 24px"}}>
+          <div style={{height:1,background:"linear-gradient(90deg,transparent,rgba(212,168,67,0.2) 35%,rgba(155,89,232,0.15) 70%,transparent)"}}/>
         </div>
 
-        {/* ─── CARD — centred, fills remaining height ─── */}
-        <div className="flex-1 min-h-0 w-full flex items-center justify-center px-4 py-4 sm:py-5">
-          <div
-            className="w-full flex flex-col overflow-hidden"
-            style={{
-              maxWidth:520,
-              height:"100%",
-              maxHeight:780,
-              background:"rgba(10,10,22,0.82)",
-              backdropFilter:"blur(32px)",
-              WebkitBackdropFilter:"blur(32px)",
-              border:"1px solid rgba(255,255,255,0.08)",
-              borderRadius:24,
-              boxShadow:"0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)",
-              animation:"cardIn 0.9s cubic-bezier(0.4,0,0.2,1) both 0.15s",
-            }}
-          >
-            {/* Top shimmer */}
-            <div className="absolute left-8 right-8 h-[1px] top-0 pointer-events-none"
-              style={{background:"linear-gradient(90deg,transparent,rgba(212,168,67,0.35) 40%,rgba(155,89,232,0.22) 70%,transparent)"}}/>
+        {/* ── CARD ── */}
+        <div style={{flex:1,minHeight:0,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",padding:"16px 16px 20px"}}>
+          <div style={{
+            width:"100%",maxWidth:520,height:"100%",maxHeight:760,
+            display:"flex",flexDirection:"column",overflow:"hidden",
+            background:"rgba(10,10,22,0.84)",
+            backdropFilter:"blur(32px)",
+            WebkitBackdropFilter:"blur(32px)",
+            border:"1px solid rgba(255,255,255,0.08)",
+            borderRadius:24,
+            boxShadow:"0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.06)",
+            animation:"cardIn 0.9s cubic-bezier(0.4,0,0.2,1) both 0.15s",
+            position:"relative",
+          }}>
+            {/* Shimmer line */}
+            <div style={{position:"absolute",top:0,left:32,right:32,height:1,pointerEvents:"none",background:"linear-gradient(90deg,transparent,rgba(212,168,67,0.35) 40%,rgba(155,89,232,0.22) 70%,transparent)"}}/>
 
-            {/* ── Card header: tabs + section title ── */}
-            <div className="px-6 pt-6 pb-0 shrink-0">
-
-              {/* Tab switcher */}
-              <div className="flex gap-1.5 p-1.5 rounded-2xl mb-5"
-                style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
+            {/* Card header */}
+            <div style={{padding:"24px 24px 0",flexShrink:0}}>
+              {/* Tabs */}
+              <div style={{display:"flex",gap:6,padding:6,borderRadius:18,marginBottom:20,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
                 {([
                   {id:"record" as Tab,
-                   icon:<svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>,
+                   icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" style={{flexShrink:0}}><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>,
                    label:"Record & Authenticate"},
                   {id:"verify" as Tab,
-                   icon:<svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>,
+                   icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>,
                    label:"Verify Videos"},
                 ]).map(({id,icon,label})=>{
                   const active=tab===id;
                   return(
-                    <button key={id} onClick={()=>setTab(id)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[11px] transition-all duration-300"
-                      style={{
-                        background:active?"rgba(212,168,67,0.12)":"transparent",
-                        border:active?"1px solid rgba(212,168,67,0.25)":"1px solid transparent",
-                        boxShadow:active?"0 0 24px rgba(212,168,67,0.1)":"none",
-                        color:active?"#D4A843":"rgba(255,255,255,0.38)",
-                      }}>
-                      {icon}
-                      <span className="font-mono text-[10px] tracking-[0.14em] uppercase">{label}</span>
+                    <button key={id} onClick={()=>setTab(id)} style={{
+                      flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                      padding:"10px 12px",borderRadius:12,border:"none",cursor:"pointer",
+                      transition:"all 0.3s ease",
+                      background:active?"rgba(212,168,67,0.12)":"transparent",
+                      boxShadow:active?"inset 0 0 0 1px rgba(212,168,67,0.25),0 0 24px rgba(212,168,67,0.1)":"none",
+                      color:active?"#D4A843":"rgba(255,255,255,0.38)",
+                      fontFamily:"'DM Mono',monospace",fontSize:10,letterSpacing:"0.14em",textTransform:"uppercase",
+                    }}>
+                      {icon}{label}
                     </button>
                   );
                 })}
               </div>
 
               {/* Section title */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-[3px] h-[20px] rounded-full shrink-0"
-                  style={{background:"linear-gradient(180deg,#D4A843,#9B59E8)"}}/>
-                <span className="font-serif text-[20px] font-light text-white leading-snug">
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+                <div style={{width:3,height:20,borderRadius:2,flexShrink:0,background:"linear-gradient(180deg,#D4A843,#9B59E8)"}}/>
+                <span style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:20,fontWeight:300,color:"#fff",lineHeight:1.3}}>
                   {tab==="record"?"Record Authenticated Video":"Verify Video Authenticity"}
                 </span>
               </div>
-
               {/* Divider */}
-              <div className="h-px mb-5" style={{background:"linear-gradient(90deg,rgba(212,168,67,0.28),transparent)"}}/>
+              <div style={{height:1,marginBottom:20,background:"linear-gradient(90deg,rgba(212,168,67,0.28),transparent)"}}/>
             </div>
 
-            {/* ── Card body ── */}
-            <div className="flex-1 min-h-0 px-6 pb-6 overflow-y-auto flex flex-col">
+            {/* Card body */}
+            <div style={{flex:1,minHeight:0,padding:"0 24px 24px",overflowY:"auto",display:"flex",flexDirection:"column"}}>
               {tab==="record"?<RecordTab/>:<VerifyTab/>}
             </div>
           </div>
