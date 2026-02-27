@@ -128,6 +128,7 @@ function PanelVideo({
           preload="auto"
           autoPlay={shouldPlay}
           onCanPlay={() => {
+            setLoaded(true);
             if (shouldPlayRef.current) {
               videoRef.current?.play().catch(() => {});
             }
