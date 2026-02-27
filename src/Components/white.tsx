@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Footer from "./Footer";
 
 const sections = [
   {
@@ -132,6 +133,7 @@ export default function WhitepaperPage() {
   const navLinks = ["Technology", "Solutions", "About", "Explore"];
 
   return (
+    <>
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'DM Mono', 'Segoe UI', system-ui, sans-serif", transition: "background 0.35s ease, color 0.35s ease" }}>
 
       {/* ── Navigation ── */}
@@ -265,6 +267,7 @@ export default function WhitepaperPage() {
 
       {/* ── Footer ── */}
       <footer style={{ borderTop: `1px solid ${T.border}`, background: T.headerBg, transition: "background 0.35s ease, border-color 0.35s ease" }}>
+        <Footer />
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <p style={{ color: T.muted, fontSize: 11, margin: 0, letterSpacing: "0.1em", textTransform: "uppercase" }}>
             If something matters, it deserves proof. — © {new Date().getFullYear()} Hashmark Protocol
@@ -290,5 +293,6 @@ export default function WhitepaperPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
