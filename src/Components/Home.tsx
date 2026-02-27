@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
+import Footer from "./Footer";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    PANEL DATA
@@ -72,6 +74,7 @@ const PANELS = [
 ];
 
 const NAV = ["", "About", "Whitepaper"];
+const NAV_ROUTES: Record<string, string> = { Whitepaper: "/white" };
 
 /* ─── Auto-cycling video + mock colour wave when no src ─── */
 function PanelVideo({
@@ -673,28 +676,30 @@ export default function HashmarkPage() {
             <nav style={{ display: "flex", gap: 4, alignItems: "center" }}>
 
               {/* Nav links */}
-              {NAV.map((item) => (
-                <a key={item} href="#"
-                  style={{
-                    fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase",
-                    textDecoration: "none", fontWeight: 600,
-                    color: dark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.65)",
-                    padding: "7px 14px", borderRadius: 7,
-                    transition: "color 0.2s, background 0.2s",
-                    fontFamily: "'DM Mono', monospace",
-                  }}
-                  onMouseEnter={e => {
-                    const el = e.currentTarget as HTMLAnchorElement;
-                    el.style.color = dark ? "#fff" : "#000";
-                    el.style.background = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
-                  }}
-                  onMouseLeave={e => {
-                    const el = e.currentTarget as HTMLAnchorElement;
-                    el.style.color = dark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.65)";
-                    el.style.background = "transparent";
-                  }}
-                >{item}</a>
-              ))}
+              {NAV.map((item) => {
+                const to = NAV_ROUTES[item];
+                const sharedStyle = {
+                  fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase" as const,
+                  textDecoration: "none", fontWeight: 600,
+                  color: dark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.65)",
+                  padding: "7px 14px", borderRadius: 7,
+                  transition: "color 0.2s, background 0.2s",
+                  fontFamily: "'DM Mono', monospace",
+                };
+                const handlers = {
+                  onMouseEnter: (e: React.MouseEvent<HTMLAnchorElement>) => {
+                    e.currentTarget.style.color = dark ? "#fff" : "#000";
+                    e.currentTarget.style.background = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+                  },
+                  onMouseLeave: (e: React.MouseEvent<HTMLAnchorElement>) => {
+                    e.currentTarget.style.color = dark ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.65)";
+                    e.currentTarget.style.background = "transparent";
+                  },
+                };
+                return to
+                  ? <Link key={item} to={to} style={sharedStyle} {...handlers}>{item}</Link>
+                  : <a key={item} href="#" style={sharedStyle} {...handlers}>{item}</a>;
+              })}
 
               {/* Separator */}
               <div style={{ width: 1, height: 22, background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)", margin: "0 8px" }} />
@@ -850,29 +855,22 @@ export default function HashmarkPage() {
               animation: "slideDown 0.3s ease both",
             }}
           >
-            {NAV.map((item) => (
-              <a
-                key={item}
-                href="#"
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontFamily: "'DM Mono', monospace",
-                  fontSize: 13,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  textDecoration: "none",
-                  fontWeight: 500,
-                  color: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
-                  padding: "14px 0",
-                  borderBottom: dark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.05)",
-                  transition: "color 0.2s",
-                }}
-              >
-                {item}
-              </a>
-            ))}
+            {NAV.map((item) => {
+              const to = NAV_ROUTES[item];
+              const mobileStyle = {
+                display: "flex", alignItems: "center",
+                fontFamily: "'DM Mono', monospace", fontSize: 13,
+                letterSpacing: "0.1em", textTransform: "uppercase" as const,
+                textDecoration: "none", fontWeight: 500,
+                color: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
+                padding: "14px 0",
+                borderBottom: dark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.05)",
+                transition: "color 0.2s",
+              };
+              return to
+                ? <Link key={item} to={to} onClick={() => setMenuOpen(false)} style={mobileStyle}>{item}</Link>
+                : <a key={item} href="#" onClick={() => setMenuOpen(false)} style={mobileStyle}>{item}</a>;
+            })}
             <a
               href="#"
               onClick={() => setMenuOpen(false)}
@@ -1013,6 +1011,7 @@ export default function HashmarkPage() {
           )}
         </footer>
       </div>
+      <Footer />
     </>
   );
 }
