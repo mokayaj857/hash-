@@ -71,7 +71,7 @@ const PANELS = [
   },
 ];
 
-const NAV = ["Portfolio", "Credentials", "Press", "About"];
+const NAV = ["Credentials", "Press", "Whitepaper"];
 
 /* ─── Auto-cycling video + mock colour wave when no src ─── */
 function PanelVideo({
@@ -521,6 +521,7 @@ export default function HashmarkPage() {
   const [autoIndex, setAutoIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dark, setDark] = useState(true);
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* Responsive */
@@ -599,17 +600,22 @@ export default function HashmarkPage() {
           from { width: 0%; }
           to   { width: 100%; }
         }
+        @keyframes shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
       `}</style>
 
       <div
         style={{
           width: "100vw",
           height: "100dvh",
-          background: "#050505",
+          background: dark ? "#050505" : "#f5f3ef",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
           fontFamily: "'DM Mono', monospace",
+          transition: "background 0.4s ease",
         }}
       >
         {/* ══════════════════════════════════════════════
@@ -622,114 +628,245 @@ export default function HashmarkPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: isMobile ? "16px 20px" : "clamp(16px, 2vh, 24px) clamp(32px, 4vw, 72px)",
+            padding: isMobile ? "0 20px" : "0 clamp(32px, 4vw, 72px)",
+            height: isMobile ? 62 : 72,
             flexShrink: 0,
             animation: "slideDown 0.9s cubic-bezier(0.4,0,0.2,1) both 0.1s",
+            background: dark
+              ? "rgba(5,5,5,0.75)"
+              : "rgba(245,243,239,0.85)",
+            backdropFilter: "blur(20px)",
+            borderBottom: dark
+              ? "1px solid rgba(255,255,255,0.06)"
+              : "1px solid rgba(0,0,0,0.08)",
+            transition: "background 0.4s ease, border-color 0.4s ease",
           }}
         >
           {/* Brand */}
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
-              <line x1="6" y1="2" x2="4" y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round" />
-              <line x1="13" y1="2" x2="11" y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round" />
-              <line x1="2" y1="7" x2="18" y2="7" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round" />
-              <line x1="1.5" y1="13" x2="17.5" y2="13" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-            <span
-              style={{
-                fontSize: isMobile ? 15 : 18,
-                letterSpacing: "0.28em",
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Logo mark */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{
+                position: "absolute",
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background: "rgba(212,168,67,0.15)",
+                filter: "blur(8px)",
+              }} />
+              <svg width="30" height="30" viewBox="0 0 20 20" fill="none" style={{ position: "relative" }}>
+                <line x1="6" y1="2" x2="4" y2="18" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
+                <line x1="13" y1="2" x2="11" y2="18" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
+                <line x1="2" y1="7" x2="18" y2="7" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
+                <line x1="1.5" y1="13" x2="17.5" y2="13" stroke="#D4A843" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <span style={{
+                fontSize: isMobile ? 15 : 17,
+                letterSpacing: "0.3em",
                 textTransform: "uppercase",
-                color: "#ffffff",
-                fontWeight: 400,
-              }}
-            >
-              HASHMARK
-            </span>
-            <span
-              style={{
-                fontSize: isMobile ? 9 : 10,
-                letterSpacing: "0.16em",
+                color: dark ? "#ffffff" : "#0a0a0a",
+                fontWeight: 600,
+                lineHeight: 1,
+                transition: "color 0.4s",
+              }}>
+                HASHMARK
+              </span>
+              <span style={{
+                fontSize: 8,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
                 color: "#D4A843",
-                padding: "3px 9px",
-                border: "1px solid rgba(212,168,67,0.45)",
-                borderRadius: 4,
-                background: "rgba(212,168,67,0.1)",
-                textTransform: "uppercase",
-              }}
-            >
-              PROTOCOL
-            </span>
+                fontWeight: 400,
+                lineHeight: 1,
+                opacity: 0.8,
+              }}>
+                PROTOCOL
+              </span>
+            </div>
           </div>
 
           {/* Desktop nav */}
           {!isMobile && (
-            <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
-              {NAV.map((item, i) => (
+            <nav style={{ display: "flex", gap: 2, alignItems: "center" }}>
+              {NAV.map((item) => (
                 <a
                   key={item}
                   href="#"
                   style={{
                     fontSize: 12,
-                    letterSpacing: "0.14em",
+                    letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     textDecoration: "none",
-                    color: i === 0 ? "#D4A843" : "#888888",
-                    borderBottom: i === 0 ? "1px solid rgba(212,168,67,0.5)" : "none",
-                    paddingBottom: i === 0 ? 2 : 0,
-                    transition: "color 0.25s",
+                    fontWeight: 500,
+                    color: dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                    padding: "8px 16px",
+                    borderRadius: 8,
+                    border: "1px solid transparent",
+                    transition: "color 0.2s, border-color 0.2s, background 0.2s",
+                    fontFamily: "'DM Mono', monospace",
+                  }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLAnchorElement;
+                    el.style.color = dark ? "#fff" : "#0a0a0a";
+                    el.style.borderColor = dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+                    el.style.background = dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLAnchorElement;
+                    el.style.color = dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
+                    el.style.borderColor = "transparent";
+                    el.style.background = "transparent";
                   }}
                 >
                   {item}
                 </a>
               ))}
-              {/* Ledger status */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 8, padding: "5px 12px", borderRadius: 99, border: "1px solid rgba(74,222,128,0.2)", background: "rgba(74,222,128,0.05)" }}>
-                <div
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: "50%",
-                    background: "#4ade80",
-                    boxShadow: "0 0 8px #4ade80",
-                    animation: "blink 2s ease-in-out infinite",
-                  }}
-                />
-                <span style={{ fontSize: 11, color: "#4ade80", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-                  Ledger Live
+
+              <div style={{ width: 1, height: 20, background: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", margin: "0 10px" }} />
+
+              {/* Ledger Live pill */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "6px 13px", borderRadius: 99,
+                border: "1px solid rgba(74,222,128,0.25)",
+                background: "rgba(74,222,128,0.06)",
+              }}>
+                <div style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: "#4ade80", boxShadow: "0 0 8px #4ade80",
+                  animation: "blink 2s ease-in-out infinite",
+                }} />
+                <span style={{ fontSize: 10, color: "#4ade80", letterSpacing: "0.14em", textTransform: "uppercase", fontWeight: 500 }}>
+                  Live
                 </span>
               </div>
+
+              <div style={{ width: 1, height: 20, background: dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)", margin: "0 10px" }} />
+
+              {/* Theme toggle */}
+              <button
+                onClick={() => setDark(d => !d)}
+                aria-label="Toggle theme"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 38, height: 38, borderRadius: 10,
+                  border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+                  background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                  cursor: "pointer",
+                  transition: "background 0.3s, border-color 0.3s, transform 0.2s",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.1) rotate(12deg)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1) rotate(0deg)";
+                }}
+              >
+                {dark ? (
+                  /* Sun icon */
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  /* Moon icon */
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Get Started CTA */}
+              <a
+                href="#"
+                style={{
+                  marginLeft: 6,
+                  fontSize: 12,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  fontWeight: 700,
+                  fontFamily: "'DM Mono', monospace",
+                  color: "#050505",
+                  background: "linear-gradient(135deg, #D4A843 0%, #e8c46a 50%, #D4A843 100%)",
+                  backgroundSize: "200% auto",
+                  padding: "10px 22px",
+                  borderRadius: 9,
+                  boxShadow: "0 0 24px rgba(212,168,67,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  transition: "box-shadow 0.2s, transform 0.15s, background-position 0.4s",
+                  whiteSpace: "nowrap" as const,
+                }}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.boxShadow = "0 0 40px rgba(212,168,67,0.55), inset 0 1px 0 rgba(255,255,255,0.2)";
+                  el.style.transform = "translateY(-2px)";
+                  el.style.backgroundPosition = "right center";
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLAnchorElement;
+                  el.style.boxShadow = "0 0 24px rgba(212,168,67,0.3), inset 0 1px 0 rgba(255,255,255,0.2)";
+                  el.style.transform = "translateY(0)";
+                  el.style.backgroundPosition = "left center";
+                }}
+              >
+                Get Started
+              </a>
             </nav>
           )}
 
-          {/* Mobile hamburger */}
+          {/* Mobile right side */}
           {isMobile && (
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 4,
-                display: "flex",
-                flexDirection: "column",
-                gap: 5,
-              }}
-              aria-label="Menu"
-            >
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: i === 1 ? 20 : 28,
-                    height: 2,
-                    background: "#D4A843",
-                    borderRadius: 2,
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {/* Theme toggle mobile */}
+              <button
+                onClick={() => setDark(d => !d)}
+                aria-label="Toggle theme"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: 34, height: 34, borderRadius: 9,
+                  border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+                  background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+                  cursor: "pointer",
+                }}
+              >
+                {dark ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                  </svg>
+                )}
+              </button>
+              {/* Hamburger */}
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  padding: 4, display: "flex", flexDirection: "column", gap: 5,
+                }}
+                aria-label="Menu"
+              >
+                {[0, 1, 2].map((i) => (
+                  <div key={i} style={{
+                    width: i === 1 ? 20 : 28, height: 2,
+                    background: "#D4A843", borderRadius: 2,
                     transition: "width 0.3s ease",
-                  }}
-                />
-              ))}
-            </button>
+                  }} />
+                ))}
+              </button>
+            </div>
           )}
         </header>
 
@@ -738,14 +875,14 @@ export default function HashmarkPage() {
           <div
             style={{
               position: "absolute",
-              top: 64,
+              top: 62,
               left: 0,
               right: 0,
               zIndex: 200,
-              background: "rgba(8,8,8,0.97)",
-              backdropFilter: "blur(20px)",
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
-              padding: "16px 20px",
+              background: dark ? "rgba(6,6,6,0.97)" : "rgba(245,243,239,0.97)",
+              backdropFilter: "blur(24px)",
+              borderBottom: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.08)",
+              padding: "8px 20px 20px",
               animation: "slideDown 0.3s ease both",
             }}
           >
@@ -755,20 +892,45 @@ export default function HashmarkPage() {
                 href="#"
                 onClick={() => setMenuOpen(false)}
                 style={{
-                  display: "block",
+                  display: "flex",
+                  alignItems: "center",
                   fontFamily: "'DM Mono', monospace",
-                  fontSize: 11,
-                  letterSpacing: "0.18em",
+                  fontSize: 13,
+                  letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   textDecoration: "none",
-                  color: "#888",
-                  padding: "12px 0",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  fontWeight: 500,
+                  color: dark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
+                  padding: "14px 0",
+                  borderBottom: dark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.05)",
+                  transition: "color 0.2s",
                 }}
               >
                 {item}
               </a>
             ))}
+            <a
+              href="#"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "block",
+                marginTop: 16,
+                fontFamily: "'DM Mono', monospace",
+                fontSize: 13,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                fontWeight: 700,
+                color: "#050505",
+                background: "linear-gradient(135deg, #D4A843, #e8c46a)",
+                padding: "13px 0",
+                borderRadius: 8,
+                textAlign: "center",
+                boxShadow: "0 0 24px rgba(212,168,67,0.3)",
+              }}
+            >
+              Get Started
+            </a>
           </div>
         )}
 
