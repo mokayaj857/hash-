@@ -1,5 +1,4 @@
 import { Link, useRouteError, isRouteErrorResponse } from "react-router-dom";
-import Navbar from "./Navbar";
 import Footer from "./Footer";
 
 export default function ErrorPage() {
@@ -19,7 +18,6 @@ export default function ErrorPage() {
 
   return (
     <>
-      <Navbar />
       <section className="section">
         <div className="section-inner">
           <div className="section-header" style={{ textAlign: "left", marginBottom: 32 }}>

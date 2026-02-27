@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import Footer from "../Components/Footer";
-import Navbar from "../Components/Navbar";
+import Footer from "./Footer";
+
 
 const sections = [
   {
@@ -104,9 +104,6 @@ const sections = [
 export default function WhitepaperPage() {
   return (
     <>
-      {/* Navigation */}
-      <Navbar />
-
       {/* Hero */}
       <section className="section" style={{ textAlign: "center" }}>
         <div className="section-inner">

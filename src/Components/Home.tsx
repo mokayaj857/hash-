@@ -71,7 +71,7 @@ const PANELS = [
   },
 ];
 
-const NAV = ["Technology", "About", "Whitepaper"];
+const NAV = ["", "About", "Whitepaper"];
 
 /* ─── Auto-cycling video + mock colour wave when no src ─── */
 function PanelVideo({

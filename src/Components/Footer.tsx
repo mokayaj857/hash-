@@ -1,74 +1,123 @@
-import { Link } from "react-router-dom";
-import { LogoFull } from "./Logo";
-
 export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-inner">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <Link to="/" className="footer-logo">
-              <LogoFull height={28} />
-            </Link>
-            <p>
-              The ledger of reality. Proving what&apos;s real at the moment of creation through
-              hardware-secured signatures and decentralized verification.
-            </p>
-          </div>
-          <div className="footer-column">
-            <h5>Technology</h5>
-            <ul>
-              <li><Link to="/#technology">Protocol Stack</Link></li>
-              <li><a href="https://docs.substrate.io" target="_blank" rel="noreferrer">Substrate Docs</a></li>
-              <li><a href="https://paritytech.github.io/polkadot-sdk" target="_blank" rel="noreferrer">Polkadot SDK</a></li>
-            </ul>
-          </div>
-          <div className="footer-column">
-            <h5>Solutions</h5>
-            <ul>
-              <li><Link to="/#solutions">Use Cases</Link></li>
-              <li><Link to="/whitepaper">Whitepaper</Link></li>
-              <li><Link to="/#roadmap">Roadmap</Link></li>
-            </ul>
-          </div>
-          <div className="footer-column">
-            <h5>Explore</h5>
-            <ul>
-              <li><a href="https://github.com" target="_blank" rel="noreferrer">GitHub</a></li>
-              <li><Link to="/#about">About Era</Link></li>
-              <li><a href="/whitepaper.md" download>Download Whitepaper</a></li>
-            </ul>
-          </div>
-          <div className="footer-column">
-            <h5>About</h5>
-            <ul>
-              <li><Link to="/#about">Mission</Link></li>
-              <li><a href="https://polkadot.network" target="_blank" rel="noreferrer">Polkadot Ecosystem</a></li>
-              <li><a href="https://web3.foundation" target="_blank" rel="noreferrer">Web3 Foundation</a></li>
-            </ul>
+    <>
+      {/* Trusted By — infinite horizontal marquee */}
+      <section className="trusted">
+        <p className="trusted-label">Built with battle-tested technology</p>
+        <div className="trusted-marquee-outer">
+          <div className="trusted-marquee-inner">
+            {[0, 1].map((copy) => (
+              <div className="trusted-track" key={copy} aria-hidden={copy === 1}>
+
+                {/* Substrate */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="5"  cy="5"  r="2.5" fill="currentColor"/>
+                    <circle cx="12" cy="5"  r="2.5" fill="currentColor"/>
+                    <circle cx="19" cy="5"  r="2.5" fill="currentColor"/>
+                    <circle cx="5"  cy="12" r="2.5" fill="currentColor"/>
+                    <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                    <circle cx="19" cy="12" r="2.5" fill="currentColor"/>
+                    <circle cx="5"  cy="19" r="2.5" fill="currentColor"/>
+                    <circle cx="12" cy="19" r="2.5" fill="currentColor"/>
+                    <circle cx="19" cy="19" r="2.5" fill="currentColor"/>
+                  </svg>
+                  <span>Substrate</span>
+                </div>
+
+                {/* Cardano — official 8-outer + 4-inner + centre star */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 40 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="3.2"/>
+                    <circle cx="20" cy="6"  r="2.2"/>
+                    <circle cx="20" cy="34" r="2.2"/>
+                    <circle cx="6"  cy="20" r="2.2"/>
+                    <circle cx="34" cy="20" r="2.2"/>
+                    <circle cx="9"  cy="9"  r="1.7"/>
+                    <circle cx="31" cy="9"  r="1.7"/>
+                    <circle cx="9"  cy="31" r="1.7"/>
+                    <circle cx="31" cy="31" r="1.7"/>
+                    <circle cx="20" cy="12" r="1.4"/>
+                    <circle cx="20" cy="28" r="1.4"/>
+                    <circle cx="12" cy="20" r="1.4"/>
+                    <circle cx="28" cy="20" r="1.4"/>
+                  </svg>
+                  <span>Cardano</span>
+                </div>
+
+                {/* Rust — gear cog */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 40 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 4l2 4h4l-2 3.5 2.5 3.5H23l-1 4-2-2-2 2-1-4h-3.5L16 11.5 14 8h4l2-4z" opacity="0.9"/>
+                    <circle cx="20" cy="20" r="8" fill="none" stroke="currentColor" strokeWidth="2.5"/>
+                    <circle cx="20" cy="20" r="4"/>
+                    <rect x="19" y="2"  width="2" height="5" rx="1"/>
+                    <rect x="19" y="33" width="2" height="5" rx="1"/>
+                    <rect x="2"  y="19" width="5" height="2" rx="1"/>
+                    <rect x="33" y="19" width="5" height="2" rx="1"/>
+                    <rect x="7.5"  y="6"   width="2" height="4" rx="1" transform="rotate(-45 8.5 8)"/>
+                    <rect x="28.5" y="6"   width="2" height="4" rx="1" transform="rotate(45 29.5 8)"/>
+                    <rect x="7.5"  y="29"  width="2" height="4" rx="1" transform="rotate(45 8.5 31)"/>
+                    <rect x="28.5" y="29"  width="2" height="4" rx="1" transform="rotate(-45 29.5 31)"/>
+                  </svg>
+                  <span>Rust</span>
+                </div>
+
+                {/* Ada ₳ — styled coin */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="2.5"/>
+                    <path d="M14 28l6-16 6 16M16.5 23h7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+                  </svg>
+                  <span>Ada</span>
+                </div>
+
+                {/* Lovelace — elegant "lovelace token" mark */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="20" cy="20" r="18" stroke="currentColor" strokeWidth="2.5"/>
+                    <path d="M14 10v16h12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <span>Lovelace</span>
+                </div>
+
+                {/* JavaScript */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="40" height="40" rx="5" fill="#F0DB4F"/>
+                    <path d="M10 28c0 2.5 1.5 4 3.8 4 2.4 0 3.7-1.3 3.7-3.3V16h-3v12.4c0 .8-.4 1.3-1.1 1.3-.7 0-1.1-.5-1.4-1.1L10 28zm10.5-.4c.5 2.7 2.5 4.4 5.5 4.4 3.1 0 5.2-1.6 5.2-4.2 0-2.2-1.2-3.4-3.9-4.3l-1.2-.4c-1.4-.5-2-1-2-1.9 0-.9.7-1.6 1.8-1.6 1 0 1.8.5 2.1 1.6l2.7-1c-.6-2.3-2.3-3.4-4.8-3.4-2.9 0-4.9 1.7-4.9 4.1 0 2.1 1.2 3.3 3.6 4.1l1.2.4c1.5.5 2.2 1.1 2.2 2.1 0 1-.9 1.7-2.2 1.7-1.4 0-2.3-.8-2.7-2.1l-2.6 1z" fill="#323330"/>
+                  </svg>
+                  <span>JavaScript</span>
+                </div>
+
+                {/* Blake2 — hash bars */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 40 40" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2"  y="8"  width="7" height="24" rx="2"/>
+                    <rect x="13" y="14" width="7" height="18" rx="2"/>
+                    <rect x="24" y="20" width="7" height="12" rx="2"/>
+                    <rect x="24" y="8"  width="7" height="6"  rx="2"/>
+                    <rect x="35" y="4"  width="3" height="32" rx="1.5" opacity="0.4"/>
+                  </svg>
+                  <span>Blake2</span>
+                </div>
+
+                {/* FRAME */}
+                <div className="trusted-logo">
+                  <svg width="20" height="20" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2"  y="2"  width="36" height="36" rx="5" stroke="currentColor" strokeWidth="2.5"/>
+                    <rect x="9"  y="9"  width="22" height="22" rx="3" stroke="currentColor" strokeWidth="2"/>
+                    <rect x="15" y="15" width="10" height="10" rx="2" fill="currentColor"/>
+                  </svg>
+                  <span>FRAME</span>
+                </div>
+
+                <span className="trusted-sep" aria-hidden="true">·</span>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="footer-bottom">
-          <p className="footer-copy">© 2025 Era. If it matters, it&apos;s on Era.</p>
-          <div className="footer-socials">
-            <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-              </svg>
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-              </svg>
-            </a>
-            <a href="https://discord.com" target="_blank" rel="noreferrer" aria-label="Discord">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-              </svg>
-            </a>
-          </div>
-        </div>
-      </div>
-    </footer>
+      </section>
+    </>
   );
 }
