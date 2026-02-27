@@ -22,8 +22,8 @@
   --surface: rgba(255, 255, 255, 0.04);
 
   /* Universal spacing — matches scroll.tsx */
-  --page-max-width: var(--page-max-width);
-  --page-side-padding: var(--page-side-padding);
+  --page-max-width: 1200px;
+  --page-side-padding: 24px;
   --section-padding-v: 96px;
 }
 

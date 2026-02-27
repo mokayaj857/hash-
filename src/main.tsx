@@ -7,6 +7,7 @@ import Hero from './Components/Hero';
 import Nav from './Components/Nav';
 import Header from './Components/Header';
 import Scroll from './Components/scroll';
+import ErrorPage from './Components/ErrorPage';
 import './index.css';
 const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
   {
     path: "scroll",
     element: <Scroll />,
+  },
+  {
+    path: "*",
+    element: <ErrorPage />,
   }
 ]);
 const rootElement = document.getElementById("root");
