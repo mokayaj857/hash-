@@ -3,6 +3,7 @@ import Hero from "./Components/Hero";
 import Home from "./Components/Home";
 import Header from "./Components/Header";
 import Nav from "./Components/Nav";
+import Scroll from "./Components/scroll";
 const App = () => {
   return (
     <Router>
@@ -12,6 +13,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="nav" element={<Nav />} />
         <Route path="header" element={<Header />} />
+        <Route path="scroll" element={<Scroll />} />
         {/* <Route path="weather" element={<Weather />} /> */}
         {/* <Route path="kenya" element={<Kenya />} /> */}
         {/* <Route path="home" element={<Home />} /> */}

@@ -6,6 +6,7 @@ import Home from './Components/Home';
 import Hero from './Components/Hero';
 import Nav from './Components/Nav';
 import Header from './Components/Header';
+import Scroll from './Components/scroll';
 import './index.css';
 const router = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
     path: "header",
     element: <Header />,
   },
+  {
+    path: "scroll",
+    element: <Scroll />,
+  }
 ]);
 const rootElement = document.getElementById("root");
 if (rootElement) {
