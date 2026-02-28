@@ -6,45 +6,45 @@ const sections = [
   {
     title: "Abstract",
     content:
-      "Hashmark is a Substrate AppChain that anchors digital content to verified devices and decentralized identities (DIDs). It creates cryptographic proofs at capture-time, stores immutable hashes on-chain, and uses a jury-based Context Court to attach human-verified meaning. The result is a ledger of reality that proves what is real without chasing fakes.",
+      "Hashmark is an authenticity protocol built on the Cardano blockchain.It binds digital content to verified devices and decentralized identities at the moment of creation  generating cryptographic proof before manipulation can occur. Content hashes are anchored immutably on Cardano, creating permanent, verifiable provenance.When meaning is contested, a decentralized Context Court delivers economically secured human judgment.Hashmark doesn’t chase deepfakes.It proves reality.",
   },
   {
     title: "Problem Statement",
     content:
-      "Detection alone cannot win the arms race against generative media. As generative capability grows faster than detection capability, the probability of reliably spotting fakes trends toward zero. Users, journalists, courts, and platforms need a way to prove authenticity instead of guessing at forgery.",
+      "Detection alone cannot win the arms race against generative media. As AI-generated content becomes indistinguishable from reality, forensic detection approaches collapse under exponential improvement in generation tools. Journalists, courts, marketplaces, governments, and platforms do not need better guesswork. They need verifiable proof.Hashmark replaces reactive detection with proactive authenticity   anchored immutably on Cardano.",
   },
   {
     title: "Design Principles",
     bullets: [
       "Hardware-rooted trust: signatures live in Secure Enclave / Android TEE, never exported.",
       "Identity-first: DIDs with granular rights (Update, Impersonate, Dispute) and device registration.",
-      "Immutable proofs: Blake2-256 content IDs plus device ID, block height, signer, and metadata.",
+      "Cardano as the Settlement Layer: Only the content’s hash and metadata go on-chain; the file stays off-chain. Cardano guarantees immutability, timestamps, and global trust",
       "Human oracle: juror staking, slashing, and escalation to resolve contextual disputes.",
-      "Composable primitives: pallets expose traits so runtimes and other chains can integrate cleanly.",
+      "Smart Contract Enforcement: Cardano smart contracts automatically check content hashes, block duplicates, and record proofs immutably on-chain",
     ],
   },
   {
     title: "Core Architecture",
     subsections: [
       {
-        name: "Identity Registry Pallet",
+        name: "Identity Registry",
         bullets: [
-          "Creates DIDs and manages signatories with permanent or time-bound rights.",
-          "Registers devices per DID; enforces permissions for downstream calls.",
-          "Implements DidManager trait for loose coupling with other pallets.",
+          "Creates and manages DIDs.",
+          "Registers devices per DID.",
+          "Enforces granular rights..",
         ],
       },
       {
-        name: "Content Registry Pallet",
+        name: "Content Registry",
         bullets: [
-          "Accepts content from accounts holding Impersonate rights for a DID.",
-          "Hashes content (Blake2-256) to create ContentId; prevents duplicates.",
-          "Records proof: content hash, DID, device ID, block number, metadata, signer.",
-          "Stores DID-to-content indexes for efficient lookup.",
+          "Accepts submissions from authorized identities.",
+          "Prevents duplicate hashes.",
+          "Records immutable proof on Cardano.",
+          "Indexes DID-to-content for efficient lookup.",
         ],
       },
       {
-        name: "Context Court Pallet",
+        name: "Context Court",
         bullets: [
           "Dispute system for content meaning; requires Dispute right to open cases.",
           "Randomly summons jurors from a staked pool; tracks votes (Yay/Nay/Abstain).",
@@ -55,12 +55,15 @@ const sections = [
     ],
   },
   {
-    title: "Data Flows",
+    title: "How Hashmark Works",
     bullets: [
-      "Capture: Device hashes media and signs inside secure silicon. Client uploads media to IPFS (planned) and broadcasts hash + DID + signature + metadata.",
-      "Registration: Identity Registry checks rights and device membership. Content Registry prevents duplicates and records immutable proof.",
-      "Context Disputes: Accounts with Dispute rights open a case for a ContentId. Context Court summons jurors, records votes, escalates ties, and processes rewards/slashes.",
-      "Verification: Verifiers recompute hashes, read on-chain proofs, and reference court outcomes to display trust badges.",
+      "A device captures media",
+      "The content is hashed",
+      "The hash is signed inside secure hardware (Secure Enclave / Android TEE).",
+      "The media is stored off-chain",
+      "The hash + identity + metadata are recorded on Cardano.",
+      "At that moment, authenticity becomes permanent.",
+     
     ],
   },
   {
@@ -79,9 +82,9 @@ const sections = [
       "Mobile capture app with Secure Enclave / TEE integration.",
       "IPFS integration for content pinning.",
       "Public API and SDK for verification and content lookup.",
-      "Cross-chain verification via XCM.",
+      "Smart contract modules native to Cardano",
       "Juror reputation system to weight voting and rewards.",
-      "Firmware-level integrations with device manufacturers.",
+      
     ],
   },
   {
@@ -97,7 +100,7 @@ const sections = [
   {
     title: "Conclusion",
     content:
-      "Hashmark is open to contributors, integrators, and early capture partners. Fork the pallets, wire the DidManager trait into your runtime, or build verification badges on top of the on-chain events. Together, we can build a more trustworthy internet where reality can be proven, not just guessed.",
+      "Hashmark is not a detection tool.It is a foundational authenticity protocol. Built on Cardano, Hashmark turns the blockchain into a permanent ledger of reality where digital content can be proven, not debated. In a world where synthetic media erodes trust, Hashmark restores it. If reality matters, it should be provable.Hashmark makes it provable.",
   },
 ];
 
