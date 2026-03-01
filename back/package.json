@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "node:local": "anvil --chain-id 1337",
+    "node:local": "anvil --chain-id 1337 --allow-origin '*'",
     "deploy:local": "node scripts/deploy.js local",
     "deploy:sepolia": "node scripts/deploy.js sepolia",
     "compile": "forge build",

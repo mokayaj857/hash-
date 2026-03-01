@@ -250,4 +250,30 @@ router.get("/qr/:hash", async (req, res) => {
   }
 });
 
+/* ── /api/faucet — fund any address on local Anvil with 10 ETH ── */
+router.post("/faucet", express.json(), async (req, res) => {
+  const { address } = req.body || {};
+  if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address))
+    return res.status(400).json({ error: "Valid Ethereum address required." });
+
+  const rpcUrl = process.env.RPC_URL || "http://127.0.0.1:8545";
+
+  try {
+    const resp = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0", method: "anvil_setBalance",
+        params: [address, "0x8AC7230489E80000"], // 10 ETH
+        id: 1,
+      }),
+    });
+    const data = await resp.json();
+    if (data.error) return res.status(500).json({ error: data.error.message });
+    res.json({ success: true, address, funded: "10 ETH" });
+  } catch (err) {
+    res.status(500).json({ error: "Faucet failed — is Anvil running?", detail: err.message });
+  }
+});
+
 module.exports = router;
