@@ -3,6 +3,7 @@
 const express  = require("express");
 const crypto   = require("crypto");
 const QRCode   = require("qrcode");
+const PDFDoc   = require("pdfkit");
 const { ethers } = require("ethers");
 const { upload }           = require("../middleware/upload");
 const { getContractSetup } = require("../config/contract");
@@ -238,9 +239,9 @@ router.get("/qr/:hash", async (req, res) => {
 
   try {
     const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-      errorCorrectionLevel: "M",
-      margin: 2,
-      width: 300,
+      errorCorrectionLevel: "H",
+      margin: 4,
+      width: 512,
       color: { dark: "#000000", light: "#ffffff" },
     });
     res.json({ qrDataUrl, verifyUrl, hash });
@@ -248,6 +249,308 @@ router.get("/qr/:hash", async (req, res) => {
     console.error("[qr]", err);
     res.status(500).json({ error: "QR code generation failed.", detail: err.message });
   }
+});
+
+/* ── /api/whitepaper — generate and stream the Hashmark Protocol whitepaper PDF ── */
+router.get("/whitepaper", (req, res) => {
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", 'attachment; filename="hashmark-protocol-whitepaper.pdf"');
+
+  const doc = new PDFDoc({ size: "A4", margins: { top: 72, bottom: 72, left: 72, right: 72 }, info: {
+    Title: "Hashmark Protocol — Whitepaper",
+    Author: "Hashmark Protocol",
+    Subject: "Blockchain-Based Video Authentication",
+    Keywords: "blockchain, video authentication, SHA-256, Ethereum, smart contracts",
+  }});
+
+  doc.pipe(res);
+
+  const GOLD   = "#D4A843";
+  const DARK   = "#111111";
+  const BODY   = "#333333";
+  const SUB    = "#666666";
+  const W      = 451; // usable width
+
+  // ── Cover ──
+  doc.rect(0, 0, 595, 842).fill("#0a0a16");
+  doc.rect(0, 0, 595, 6).fill(GOLD);
+  doc.rect(0, 836, 595, 6).fill(GOLD);
+
+  doc.font("Helvetica-Bold").fontSize(36).fillColor(GOLD).text("HASHMARK", 72, 180, { width: W, align: "center" });
+  doc.font("Helvetica").fontSize(16).fillColor("#ffffff").text("Protocol", 72, 222, { width: W, align: "center" });
+  doc.moveDown(2);
+  doc.font("Helvetica").fontSize(12).fillColor("#aaaaaa").text("Blockchain-Based Video Authentication", 72, 260, { width: W, align: "center" });
+  doc.font("Helvetica").fontSize(10).fillColor("#888888").text("Technical Whitepaper — v1.0", 72, 285, { width: W, align: "center" });
+
+  doc.rect(72, 320, W, 1).fill(GOLD).fillOpacity(0.4);
+
+  doc.font("Helvetica").fontSize(10).fillColor("#888888").text(
+    "An open protocol for cryptographic video fingerprinting and\non-chain authenticity verification using Ethereum smart contracts.",
+    72, 340, { width: W, align: "center" }
+  );
+
+  doc.rect(72, 430, W, 1).fill("#333333");
+  doc.font("Helvetica").fontSize(9).fillColor("#666666").text("hashmark.protocol  ·  Ethereum  ·  Foundry  ·  SHA-256", 72, 445, { width: W, align: "center" });
+  doc.font("Helvetica").fontSize(9).fillColor("#555555").text(`Published ${new Date().toDateString()}`, 72, 462, { width: W, align: "center" });
+
+  // ── New page — Abstract ──
+  doc.addPage({ size: "A4", margins: { top: 72, bottom: 72, left: 72, right: 72 } });
+
+  const h1 = (text) => {
+    doc.moveDown(0.5);
+    doc.font("Helvetica-Bold").fontSize(20).fillColor(GOLD).text(text, { width: W });
+    doc.rect(72, doc.y + 4, W, 2).fill(GOLD).fillOpacity(0.3);
+    doc.moveDown(0.8);
+  };
+  const h2 = (text) => {
+    doc.moveDown(0.4);
+    doc.font("Helvetica-Bold").fontSize(13).fillColor(DARK).text(text, { width: W });
+    doc.moveDown(0.3);
+  };
+  const body = (text) => {
+    doc.font("Helvetica").fontSize(10).fillColor(BODY).text(text, { width: W, lineGap: 4 });
+    doc.moveDown(0.5);
+  };
+  const bullet = (text) => {
+    doc.font("Helvetica").fontSize(10).fillColor(BODY).text(`• ${text}`, { width: W - 16, indent: 16, lineGap: 3 });
+  };
+  const code = (text) => {
+    doc.rect(doc.x, doc.y, W, doc.heightOfString(text, { width: W - 24 }) + 16).fill("#f4f4f4");
+    doc.font("Courier").fontSize(9).fillColor("#222222").text(text, doc.x + 12, doc.y - doc.heightOfString(text, { width: W - 24 }) - 16 + 8, { width: W - 24, lineGap: 3 });
+    doc.moveDown(0.8);
+  };
+
+  // Page header helper
+  const pageHeader = () => {
+    doc.rect(72, 40, W, 1).fill("#eeeeee");
+    doc.font("Helvetica").fontSize(8).fillColor(SUB).text("HASHMARK PROTOCOL — WHITEPAPER", 72, 50, { width: W / 2 });
+    doc.font("Helvetica").fontSize(8).fillColor(SUB).text(`Page ${doc.bufferedPageRange().start + 1}`, 72, 50, { width: W, align: "right" });
+    doc.rect(72, 60, W, 1).fill("#eeeeee");
+  };
+
+  pageHeader();
+
+  h1("Abstract");
+  body(
+    "Hashmark Protocol is an open, permissionless system for authenticating digital video content " +
+    "using cryptographic fingerprinting and Ethereum smart contracts. The protocol computes a " +
+    "SHA-256 hash of a video file in the user's browser, submits that hash to an immutable " +
+    "on-chain registry via MetaMask, and issues a verifiable certificate binding the hash to a " +
+    "wallet address and block timestamp. Any third party can independently verify a video's " +
+    "authenticity by recomputing its hash and querying the public ledger — without trusting any " +
+    "central server."
+  );
+
+  h1("1. Introduction");
+  body(
+    "The proliferation of synthetic and manipulated video content has created an urgent need for " +
+    "trustworthy provenance infrastructure. Existing solutions rely on centralised databases, " +
+    "proprietary watermarking, or ad-hoc metadata — all of which are mutable, censorable, and " +
+    "require trusting a single authority."
+  );
+  body(
+    "Hashmark Protocol approaches the problem differently: rather than storing the video itself, " +
+    "it stores only an unforgeable cryptographic fingerprint on a public, append-only blockchain. " +
+    "The video remains under the creator's full control; the ledger record is the proof."
+  );
+
+  h1("2. Protocol Design");
+  h2("2.1 Fingerprinting");
+  body(
+    "SHA-256 is computed client-side using the Web Crypto API (SubtleCrypto.digest). " +
+    "The computation occurs entirely in the browser — the raw video bytes never leave the " +
+    "user's device. Any single-bit change to the video produces an entirely different hash " +
+    "(avalanche effect), making tampering cryptographically detectable."
+  );
+  code(
+    "const buf  = await file.arrayBuffer();\n" +
+    "const hash = await crypto.subtle.digest('SHA-256', buf);\n" +
+    "// → 32-byte array → 64-char lowercase hex string"
+  );
+
+  h2("2.2 On-Chain Registry");
+  body(
+    "The Hashmark smart contract is deployed on Ethereum (or any EVM-compatible chain). " +
+    "It stores a mapping from SHA-256 hash to (creator address, block timestamp). " +
+    "Authentication is a single write transaction; verification is a free read."
+  );
+  code(
+    "// SPDX-License-Identifier: MIT\n" +
+    "pragma solidity ^0.8.20;\n\n" +
+    "contract Hashmark {\n" +
+    "    struct Record { address creator; uint256 timestamp; }\n" +
+    "    mapping(bytes32 => Record) private registry;\n\n" +
+    "    function authenticateVideo(string calldata videoHash) external {\n" +
+    "        bytes32 key = keccak256(abi.encodePacked(videoHash));\n" +
+    "        require(registry[key].timestamp == 0, 'Already authenticated');\n" +
+    "        registry[key] = Record(msg.sender, block.timestamp);\n" +
+    "        emit VideoAuthenticated(videoHash, msg.sender, block.timestamp);\n" +
+    "    }\n\n" +
+    "    function verifyVideo(string calldata videoHash)\n" +
+    "        external view returns (address creator, uint256 timestamp) {\n" +
+    "        bytes32 key = keccak256(abi.encodePacked(videoHash));\n" +
+    "        Record memory r = registry[key];\n" +
+    "        return (r.creator, r.timestamp);\n" +
+    "    }\n" +
+    "}"
+  );
+
+  doc.addPage();
+  pageHeader();
+
+  h2("2.3 Transaction Flow");
+  body("The end-to-end authentication flow is:");
+  ["1. User records or selects a video in the browser.",
+   "2. SHA-256 fingerprint is computed client-side (no upload required).",
+   "3. User connects MetaMask wallet and approves the chain switch to the target network.",
+   "4. Frontend calls authenticateVideo(hash) on the smart contract via ethers.js.",
+   "5. MetaMask prompts the user to sign and broadcast the transaction.",
+   "6. Frontend waits for block confirmation (tx.wait()).",
+   "7. Receipt delivers real tx hash, block number, and timestamp.",
+   "8. Backend generates a QR code linking to the public verification URL.",
+   "9. User downloads the authenticated video and/or a JSON certificate."
+  ].forEach(s => bullet(s));
+  doc.moveDown(0.5);
+
+  h2("2.4 Verification Flow");
+  body("Any party wishing to verify authenticity:");
+  ["1. Drops the video file into the Verify tab (or navigates to /verify?hash=<sha256>).",
+   "2. Browser recomputes the SHA-256 hash of the uploaded file.",
+   "3. Frontend queries GET /api/verify/:hash on the backend.",
+   "4. Backend calls verifyVideo(hash) on the read-only contract — zero gas cost.",
+   "5. If the record exists, the original creator address and block timestamp are returned.",
+   "6. Result is displayed with the QR code and a downloadable certificate."
+  ].forEach(s => bullet(s));
+  doc.moveDown(0.5);
+
+  h1("3. Security Properties");
+  h2("3.1 Collision Resistance");
+  body(
+    "SHA-256 has 2^256 possible outputs. Finding two videos with the same hash requires " +
+    "computational work exceeding the energy budget of the observable universe under current " +
+    "cryptanalysis. The probability of an accidental collision is negligible."
+  );
+  h2("3.2 Immutability");
+  body(
+    "Once written to the Ethereum blockchain, a record cannot be deleted or modified. " +
+    "The smart contract enforces this at the EVM level: authenticateVideo reverts if the " +
+    "hash is already registered. Even the contract deployer cannot alter existing records."
+  );
+  h2("3.3 Non-custodial");
+  body(
+    "The protocol is fully non-custodial. No server ever holds private keys, passwords, or " +
+    "video content. Authentication is signed exclusively by the user's MetaMask wallet. " +
+    "The backend is stateless and serves only as a query layer."
+  );
+  h2("3.4 Transparency");
+  body(
+    "All authentication events are emitted as VideoAuthenticated events on the public blockchain. " +
+    "Any Ethereum node can independently verify the full history without trusting the Hashmark " +
+    "application server."
+  );
+
+  doc.addPage();
+  pageHeader();
+
+  h1("4. Technical Stack");
+  const stack = [
+    ["Smart Contract", "Solidity ^0.8.20 — deployed with Foundry (forge create)"],
+    ["Blockchain", "Ethereum (EVM-compatible) — local development via Anvil"],
+    ["Frontend",  "React 19 + TypeScript + Vite — direct ethers.js v6 contract calls"],
+    ["Wallet",    "MetaMask — wallet_addEthereumChain + eth_requestAccounts"],
+    ["Hashing",   "SubtleCrypto (Web Crypto API) — SHA-256, client-side"],
+    ["Backend",   "Node.js + Express — verification proxy, QR generation (qrcode), faucet"],
+    ["QR Codes",  "node-qrcode — 512×512px PNG, error correction level H"],
+    ["Testing",   "Foundry forge test — unit tests for contract logic"],
+  ];
+  stack.forEach(([k, v]) => {
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(DARK).text(k + ": ", { continued: true, width: W });
+    doc.font("Helvetica").fontSize(10).fillColor(BODY).text(v, { lineGap: 4 });
+  });
+  doc.moveDown(0.5);
+
+  h1("5. Deployment");
+  h2("5.1 Local Development");
+  code(
+    "# Start local blockchain\ncd back && npm run node:local\n\n" +
+    "# Deploy contract (auto-patches .env)\nnpm run deploy:local\n\n" +
+    "# Start backend API\nnpm start\n\n" +
+    "# Start frontend\ncd .. && npm run dev"
+  );
+  h2("5.2 Mainnet / Sepolia");
+  body("Set SEPOLIA_RPC_URL and DEPLOY_PRIVATE_KEY in back/.env, then:");
+  code("cd back && npm run deploy:sepolia");
+
+  h1("6. API Reference");
+  const apis = [
+    ["GET /api/stats",           "Returns total proof count and latest block number"],
+    ["GET /api/verify/:hash",    "Queries on-chain record — returns creator, timestamp, authenticated"],
+    ["GET /api/qr/:hash",        "Returns 512px PNG QR code data URL for the verify URL"],
+    ["GET /api/whitepaper",      "Streams this PDF document"],
+    ["POST /api/faucet",         "Funds a wallet address with 10 ETH on local Anvil (dev only)"],
+    ["POST /api/hash/file",      "Accepts multipart video upload, returns SHA-256"],
+    ["POST /api/authenticate",   "Server-side authentication (requires PRIVATE_KEY in .env)"],
+    ["GET /api/recent",          "Returns the most recent VideoAuthenticated events"],
+    ["GET /api/health",          "Health check — returns status and contract address"],
+  ];
+  apis.forEach(([endpoint, desc]) => {
+    doc.font("Courier").fontSize(9).fillColor("#1a6a9a").text(endpoint, { continued: true, width: W });
+    doc.font("Helvetica").fontSize(9).fillColor(SUB).text("  — " + desc, { lineGap: 5 });
+  });
+
+  doc.addPage();
+  pageHeader();
+
+  h1("7. Certificate Format");
+  body(
+    "After successful authentication, the user can download a JSON certificate. " +
+    "This document is a portable, human-readable record of the authentication event:"
+  );
+  code(
+    '{\n' +
+    '  "txHash":    "0xabc...123",\n' +
+    '  "videoHash": "sha256:1a2b3c...",\n' +
+    '  "creator":   "0xYourWalletAddress",\n' +
+    '  "block":     4872341,\n' +
+    '  "timestamp": "2026-03-01 12:00:00 UTC",\n' +
+    '  "network":   "Ethereum Mainnet"\n' +
+    '}'
+  );
+  body(
+    "The certificate can be independently verified by anyone with access to an Ethereum " +
+    "node: recompute the video's SHA-256, call verifyVideo(hash) on the contract, and " +
+    "compare the returned creator address and timestamp to the certificate."
+  );
+
+  h1("8. Roadmap");
+  ["Decentralised storage integration (IPFS/Filecoin) for optional video archiving",
+   "EIP-712 structured signing for richer certificate metadata",
+   "Batch authentication for news organisations and media agencies",
+   "Browser extension for inline video verification on social platforms",
+   "Layer-2 deployment (Optimism / Base) for lower gas costs",
+   "Cross-chain registry with a unified resolver",
+  ].forEach(s => bullet(s));
+  doc.moveDown(0.8);
+
+  h1("9. Conclusion");
+  body(
+    "Hashmark Protocol provides a minimal, trustless foundation for video authenticity " +
+    "in the age of synthetic media. By anchoring cryptographic fingerprints to an " +
+    "immutable public ledger and keeping all sensitive operations client-side, it achieves " +
+    "strong security guarantees without requiring users to trust any centralised service."
+  );
+  body(
+    "The protocol is intentionally simple: one smart contract, one hash function, one " +
+    "transaction per video. This simplicity is a feature — it makes the system auditable, " +
+    "portable, and resistant to single points of failure."
+  );
+
+  // Footer on last page
+  doc.rect(72, 780, W, 1).fill("#dddddd");
+  doc.font("Helvetica").fontSize(8).fillColor(SUB)
+    .text("© Hashmark Protocol — open source — all rights reserved", 72, 790, { width: W, align: "center" });
+
+  doc.end();
 });
 
 /* ── /api/faucet — fund any address on local Anvil with 10 ETH ── */
