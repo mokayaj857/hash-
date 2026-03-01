@@ -73,7 +73,7 @@ const PANELS = [
   },
 ];
 
-const NAV = ["", "About", "Whitepaper"];
+const NAV = ["", "", "Whitepaper"];
 const NAV_ROUTES: Record<string, string> = { Whitepaper: "/white" };
 
 /* ─── Auto-cycling video + mock colour wave when no src ─── */
