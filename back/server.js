@@ -55,24 +55,26 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: err.message || "Internal server error." });
 });
 
-/* ── Start ── */
-const server = app.listen(PORT, () => {
-  console.log(`\n🔷  Hashmark backend running on http://localhost:${PORT}`);
-  console.log(`     Health : GET  http://localhost:${PORT}/api/health`);
-  console.log(`     Hash   : POST http://localhost:${PORT}/api/hash/file`);
-  console.log(`     Auth   : POST http://localhost:${PORT}/api/authenticate`);
-  console.log(`     Verify : GET  http://localhost:${PORT}/api/verify/:hash`);
-  console.log(`     Info   : GET  http://localhost:${PORT}/api/info\n`);
-});
+/* ── Start (only when run directly — not in Vercel serverless) ── */
+if (require.main === module) {
+  const server = app.listen(PORT, () => {
+    console.log(`\n🔷  Hashmark backend running on http://localhost:${PORT}`);
+    console.log(`     Health : GET  http://localhost:${PORT}/api/health`);
+    console.log(`     Hash   : POST http://localhost:${PORT}/api/hash/file`);
+    console.log(`     Auth   : POST http://localhost:${PORT}/api/authenticate`);
+    console.log(`     Verify : GET  http://localhost:${PORT}/api/verify/:hash`);
+    console.log(`     Info   : GET  http://localhost:${PORT}/api/info\n`);
+  });
 
-server.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(`\n❌  Port ${PORT} is already in use.`);
-    console.error(`   Run this to free it:  kill $(fuser ${PORT}/tcp)\n`);
-    process.exit(1);
-  } else {
-    throw err;
-  }
-});
+  server.on("error", (err) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`\n❌  Port ${PORT} is already in use.`);
+      console.error(`   Run this to free it:  kill $(fuser ${PORT}/tcp)\n`);
+      process.exit(1);
+    } else {
+      throw err;
+    }
+  });
+}
 
 module.exports = app;

@@ -7,7 +7,6 @@ import { useWallet } from "../hooks/useWallet";
 import ABI from "../abi/Hashmark.json";
 
 const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || "";
-const VITE_RPC_URL     = (import.meta.env.VITE_RPC_URL     as string) || "http://127.0.0.1:8545";
 
 /* ─── types ─── */
 interface AuthResult {

@@ -162,7 +162,15 @@ function RecordTab({ wallet, signer, chainId, connecting, installed, onConnect }
     setElapsed(0);timerRef.current=setInterval(()=>setElapsed(s=>s+1),1000);setStep("recording");
   };
   const stopRec=()=>{mrRef.current?.stop();clearInterval(timerRef.current!);};
-  const download=()=>{if(!videoURL)return;const a=document.createElement("a");a.href=videoURL;a.download=`hashmark_${Date.now()}.webm`;a.click();};
+  const download=()=>{
+    if(!videoURL)return;
+    const a=document.createElement("a");
+    a.href=videoURL;
+    a.download=`hashmark_${Date.now()}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   const reset=()=>{setStep("idle");setVideoURL(null);setHash(null);setTxHash(null);setSignErr("");setProgress(0);setTxBlock(null);setTxTs(null);setTxNet("");};
 
   const sign = async () => {
@@ -557,22 +565,40 @@ function VerifyTab() {
 }
 
 /* ════════════════════════════════ ROOT ════════════════════════════════ */
+
+// Pick MetaMask provider from window.ethereum — handles multi-wallet conflicts
+function getMetaMaskProvider(): ethers.Eip1193Provider | null {
+  if (typeof window === "undefined") return null;
+  const eth = window.ethereum as (ethers.Eip1193Provider & {
+    isMetaMask?: boolean;
+    providers?: (ethers.Eip1193Provider & { isMetaMask?: boolean })[];
+  }) | undefined;
+  if (!eth) return null;
+  // EIP-6963 / MetaMask multi-wallet: pick MetaMask specifically
+  if (eth.providers?.length) {
+    const mm = eth.providers.find(p => p.isMetaMask);
+    if (mm) return mm;
+  }
+  return eth;
+}
+
 export default function HashmarkApp() {
   const [tab,setTab]           = useState<Tab>("record");
   const [wallet,setWallet]     = useState<string|null>(null);
   const [signer,setSigner]     = useState<ethers.JsonRpcSigner|null>(null);
   const [chainId,setChainId]   = useState<number|null>(null);
   const [connecting,setConn]   = useState(false);
-  const installed               = typeof window !== "undefined" && !!window.ethereum;
+  const installed               = !!getMetaMaskProvider();
 
   // Auto-reconnect if already approved
   useEffect(()=>{
-    if (!window.ethereum) return;
-    (window.ethereum as {request:(a:{method:string;params?:unknown[]})=>Promise<string[]>})
-      .request({method:"eth_accounts"})
+    const eip = getMetaMaskProvider();
+    if (!eip) return;
+    const eth = eip as { request:(a:{method:string;params?:unknown[]})=>Promise<string[]> };
+    eth.request({method:"eth_accounts"})
       .then(async (accounts: string[])=>{
         if (accounts[0]) {
-          const provider = new ethers.BrowserProvider(window.ethereum as ethers.Eip1193Provider);
+          const provider = new ethers.BrowserProvider(eip);
           const s = await provider.getSigner();
           const net = await provider.getNetwork();
           setWallet(accounts[0]);
@@ -580,24 +606,27 @@ export default function HashmarkApp() {
           setChainId(Number(net.chainId));
         }
       }).catch(()=>{});
-    // Listen for account / chain changes
-    const eth = window.ethereum as {on:(e:string,cb:(...a:unknown[])=>void)=>void;removeListener:(e:string,cb:(...a:unknown[])=>void)=>void};
+    // Events always live on window.ethereum (the top-level object), not on a sub-provider
+    type EthEvents = { on:(e:string,cb:(...a:unknown[])=>void)=>void; removeListener:(e:string,cb:(...a:unknown[])=>void)=>void };
+    const evts = window.ethereum as unknown as EthEvents;
+    if (!evts?.on) return;
     const onAccounts = (accs: unknown) => {
       const accounts = accs as string[];
       if (!accounts[0]) { setWallet(null); setSigner(null); setChainId(null); }
       else setWallet(accounts[0]);
     };
     const onChain = (cid: unknown) => setChainId(parseInt(cid as string, 16));
-    eth.on("accountsChanged", onAccounts);
-    eth.on("chainChanged", onChain);
-    return () => { eth.removeListener("accountsChanged", onAccounts); eth.removeListener("chainChanged", onChain); };
+    evts.on("accountsChanged", onAccounts);
+    evts.on("chainChanged", onChain);
+    return () => { evts.removeListener("accountsChanged", onAccounts); evts.removeListener("chainChanged", onChain); };
   },[]);
 
   const connectWallet = async () => {
-    if (!window.ethereum) return;
+    const eip = getMetaMaskProvider();
+    if (!eip) return;
     setConn(true);
     try {
-      const eth = window.ethereum as { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> };
+      const eth = eip as { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> };
 
       // 1. Request accounts first
       await eth.request({ method: "eth_requestAccounts" });
@@ -629,13 +658,23 @@ export default function HashmarkApp() {
         // If user rejected switch, continue anyway with current network
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum as ethers.Eip1193Provider);
+      const provider = new ethers.BrowserProvider(eip);
       const s = await provider.getSigner();
       const addr = await s.getAddress();
       const net = await provider.getNetwork();
       setWallet(addr);
       setSigner(s);
       setChainId(Number(net.chainId));
+
+      // Auto-fund wallet on local networks (Anvil/Hardhat) so transactions don't fail
+      const cid = Number(net.chainId);
+      if (cid === 1337 || cid === 31337) {
+        fetch("/api/faucet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: addr }),
+        }).catch(() => {});
+      }
     } catch { /* user rejected */ }
     finally { setConn(false); }
   };

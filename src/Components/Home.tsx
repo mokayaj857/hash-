@@ -78,7 +78,7 @@ const NAV_ROUTES: Record<string, string> = { Whitepaper: "/white" };
 /* ─── Auto-cycling video + mock colour wave when no src ─── */
 function PanelVideo({
   videos,
-  accent,
+  accent: _accent,
   rgb,
   isHovered,
   autoPlay,
