@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Footer from "./Footer";
+import { getStats, type StatsResult } from "../api";
 
 const technology = [
   {
@@ -93,6 +95,22 @@ const explore = [
 ];
 
 export default function Home() {
+  const [stats, setStats] = useState<StatsResult | null>(null);
+
+  // Poll live chain stats every 15 seconds
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await getStats();
+        if (!cancelled) setStats(data);
+      } catch { /* backend offline — keep null */ }
+    };
+    load();
+    const id = setInterval(load, 15_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
   return (
     <>
       {/* Hero */}
@@ -400,15 +418,86 @@ export default function Home() {
                 <div className="stat-label">Open Source</div>
               </div>
               <div className="stat">
-                <div className="stat-value">∞</div>
-                <div className="stat-label">Immutable Proofs</div>
+                <div className="stat-value" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {stats ? stats.totalProofs.toLocaleString() : "—"}
+                </div>
+                <div className="stat-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {stats && !stats.offline && (
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80", display: "inline-block", flexShrink: 0 }} />
+                  )}
+                  Immutable Proofs
+                </div>
               </div>
               <div className="stat">
-                <div className="stat-value">XCM</div>
-                <div className="stat-label">Cross-chain Ready</div>
+                <div className="stat-value" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {stats && stats.blockNumber > 0 ? `#${stats.blockNumber.toLocaleString()}` : "—"}
+                </div>
+                <div className="stat-label" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {stats && !stats.offline && (
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80", display: "inline-block", flexShrink: 0 }} />
+                  )}
+                  Current Block
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Recent On-Chain Proofs */}
+      <section id="live" className="section">
+        <div className="section-inner">
+          <div className="section-header">
+            <p className="section-label" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {stats && !stats.offline ? (
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px #4ade80", display: "inline-block" }} />
+              ) : (
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "inline-block" }} />
+              )}
+              Live Chain
+            </p>
+            <h2 className="section-title">Recent Authentications</h2>
+            <p className="section-desc">
+              The latest video proofs registered on-chain, pulled directly from the Hashmark smart contract.
+            </p>
+          </div>
+
+          {!stats ? (
+            <div style={{ textAlign: "center", padding: "32px 0", opacity: 0.4 }}>Connecting to chain…</div>
+          ) : stats.offline ? (
+            <div style={{ textAlign: "center", padding: "32px 0", opacity: 0.4 }}>Node offline — start your local node or configure RPC_URL in the backend.</div>
+          ) : stats.recentProofs.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "32px 0", opacity: 0.4 }}>
+              No proofs on-chain yet.{" "}
+              <Link to="/verify" style={{ color: "var(--accent)" }}>Authenticate the first video →</Link>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {stats.recentProofs.map((proof) => (
+                <div key={proof.txHash} className="tech-card" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                    <code style={{ fontSize: 13, wordBreak: "break-all", flex: 1, color: "var(--accent)" }}>{proof.videoHash}</code>
+                    <Link
+                      to={`/verify?hash=${encodeURIComponent(proof.videoHash)}`}
+                      style={{ fontSize: 12, color: "var(--accent)", opacity: 0.8, whiteSpace: "nowrap", textDecoration: "none" }}
+                    >
+                      Verify →
+                    </Link>
+                  </div>
+                  <div style={{ display: "flex", gap: 20, flexWrap: "wrap", fontSize: 12, opacity: 0.6 }}>
+                    <span>Block {proof.blockNumber.toLocaleString()}</span>
+                    <span>{new Date(proof.timestamp * 1000).toLocaleString()}</span>
+                    <span>{proof.creator.slice(0, 6)}…{proof.creator.slice(-4)}</span>
+                  </div>
+                </div>
+              ))}
+              <div style={{ textAlign: "center", paddingTop: 8 }}>
+                <Link to="/verify" className="btn btn-secondary" style={{ fontSize: 13 }}>
+                  Authenticate a new video →
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

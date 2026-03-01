@@ -1,39 +1,47 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
+import { ethers } from "ethers";
+import HashmarkABI from "../abi/Hashmark.json";
 
+/* ── Types ── */
 type Tab        = "record" | "verify";
-type RecordStep = "idle" | "recording" | "preview" | "signing" | "processing" | "success";
-type VerifyStep = "idle" | "hashing" | "verified" | "failed";
+type RecordStep = "idle" | "recording" | "preview" | "signing" | "processing" | "success" | "error";
+type VerifyStep = "idle" | "hashing" | "verified" | "not_found" | "error";
 
+/* ── Helpers ── */
 async function sha256(blob: Blob): Promise<string> {
   const buf  = await blob.arrayBuffer();
   const hash = await crypto.subtle.digest("SHA-256", buf);
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,"0")).join("");
 }
-const fakeTx   = () => "0x" + Array.from({length:64},()=>Math.floor(Math.random()*16).toString(16)).join("");
-const fakeAddr = () => "0x" + Array.from({length:40},()=>Math.floor(Math.random()*16).toString(16)).join("");
-const short    = (h:string) => h.slice(0,10)+"…"+h.slice(-8);
-const fmt      = (s:number) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+const short = (h: string) => h ? h.slice(0,10)+"…"+h.slice(-8) : "—";
+const fmt   = (s: number) => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+const fmtTs = (ts: number) => ts ? new Date(ts * 1000).toISOString().slice(0,19).replace("T"," ") + " UTC" : "—";
 
-/* ── QR ── */
-function QRCode({data,accent}:{data:string;accent:string}) {
-  const S=21;
-  const cells:boolean[][]=Array.from({length:S},(_,r)=>
-    Array.from({length:S},(_,c)=>((data.charCodeAt((r*S+c)%data.length)||0)+r*3+c*7)%4!==0)
-  );
-  [[0,0],[0,14],[14,0]].forEach(([r0,c0])=>{
-    for(let r=r0;r<r0+7;r++)for(let c=c0;c<c0+7;c++)
-      cells[r][c]=r===r0||r===r0+6||c===c0||c===c0+6||(r>=r0+2&&r<=r0+4&&c>=c0+2&&c<=c0+4);
-  });
-  const cell=8;
-  return(
-    <svg width={S*cell+24} height={S*cell+24} style={{borderRadius:16,background:"#fff",padding:12,flexShrink:0}}>
-      {cells.map((row,r)=>row.map((on,c)=>on
-        ?<rect key={`${r}-${c}`} x={c*cell+12} y={r*cell+12} width={cell-1} height={cell-1} rx={1} fill={accent}/>
-        :null
-      ))}
-    </svg>
+function chainName(id: number): string {
+  const names: Record<number,string> = {1:"Ethereum Mainnet",11155111:"Sepolia Testnet",137:"Polygon",80001:"Mumbai",1337:"Localhost Anvil",31337:"Hardhat"};
+  return names[id] || `Chain ${id}`;
+}
+
+const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || "";
+
+/* ── Real QR Code (from backend) ── */
+function QRImg({ hash }: { hash: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    if (!hash) return;
+    setSrc(null);
+    fetch(`/api/qr/${encodeURIComponent(hash)}`)
+      .then(r => r.json())
+      .then(d => { if (d.qrDataUrl) setSrc(d.qrDataUrl); })
+      .catch(() => {});
+  }, [hash]);
+  return (
+    <div style={{width:180,height:180,borderRadius:16,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
+      {src
+        ? <img src={src} alt="QR Code" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+        : <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#999",letterSpacing:"0.1em"}}>Loading QR…</span>
+      }
+    </div>
   );
 }
 
@@ -47,7 +55,7 @@ function Btn({children,onClick,disabled=false,gold=false,outline=false,red=false
     position:"relative",display:"flex",alignItems:"center",justifyContent:"center",
     gap:8,padding:"11px 22px",borderRadius:12,border:"none",cursor:disabled?"not-allowed":"pointer",
     fontFamily:"'DM Mono',monospace",fontSize:11,letterSpacing:"0.16em",textTransform:"uppercase",
-    transition:"all 0.25s ease",overflow:"hidden",opacity:disabled?0.3:1,
+    transition:"all 0.25s ease",overflow:"hidden",opacity:disabled?0.35:1,
     width:full?"100%":"auto",flexShrink:0,
     ...style,
   };
@@ -83,18 +91,50 @@ function Glass({children,style={}}:{children:React.ReactNode;style?:React.CSSPro
   );
 }
 
+/* ── Wallet Connect Banner ── */
+function WalletBanner({ wallet, chainId, connecting, installed, onConnect }:{
+  wallet: string|null; chainId: number|null; connecting: boolean;
+  installed: boolean; onConnect: ()=>void;
+}) {
+  if (wallet) {
+    return (
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 14px",borderRadius:10,background:"rgba(52,211,153,0.07)",border:"1px solid rgba(52,211,153,0.22)",marginBottom:16,flexShrink:0}}>
+        <div style={{width:7,height:7,borderRadius:"50%",background:"#34d399",flexShrink:0}}/>
+        <span style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"#34d399",letterSpacing:"0.1em",flex:1}}>{short(wallet)}</span>
+        {chainId && <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"rgba(52,211,153,0.55)",letterSpacing:"0.08em"}}>{chainName(chainId)}</span>}
+      </div>
+    );
+  }
+  return (
+    <div style={{marginBottom:16,flexShrink:0}}>
+      {!installed
+        ? <div style={{padding:"10px 14px",borderRadius:10,background:"rgba(248,113,113,0.07)",border:"1px solid rgba(248,113,113,0.2)",fontFamily:"'DM Mono',monospace",fontSize:10,color:"#f87171",letterSpacing:"0.08em"}}>
+            MetaMask not detected. <a href="https://metamask.io" target="_blank" rel="noreferrer" style={{color:"#D4A843"}}>Install MetaMask</a> to authenticate.
+          </div>
+        : <Btn gold onClick={onConnect} disabled={connecting} full style={{gap:10}}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><path d="M21 2H3l7 9.46V19l4 2v-9.54L21 2z"/></svg>
+            {connecting ? "Connecting…" : "Connect MetaMask to Sign"}
+          </Btn>
+      }
+    </div>
+  );
+}
+
 /* ════════════════════════════════ RECORD TAB ════════════════════════════════ */
-function RecordTab() {
+function RecordTab({ wallet, signer, chainId, connecting, installed, onConnect }:{
+  wallet: string|null; signer: ethers.JsonRpcSigner|null; chainId: number|null;
+  connecting: boolean; installed: boolean; onConnect: ()=>void;
+}) {
   const [step,setStep]         = useState<RecordStep>("idle");
   const [elapsed,setElapsed]   = useState(0);
   const [videoURL,setVideoURL] = useState<string|null>(null);
   const [hash,setHash]         = useState<string|null>(null);
   const [txHash,setTxHash]     = useState<string|null>(null);
-  const [password,setPassword] = useState("");
-  const [pwError,setPwError]   = useState(false);
   const [progress,setProgress] = useState(0);
-  const [qrData,setQrData]     = useState<string|null>(null);
-  const [wallet]               = useState(fakeAddr);
+  const [txBlock,setTxBlock]   = useState<number|null>(null);
+  const [txTs,setTxTs]         = useState<number|null>(null);
+  const [txNet,setTxNet]       = useState("");
+  const [signErr,setSignErr]   = useState("");
 
   const liveRef   = useRef<HTMLVideoElement>(null);
   const mrRef     = useRef<MediaRecorder|null>(null);
@@ -122,29 +162,53 @@ function RecordTab() {
     setElapsed(0);timerRef.current=setInterval(()=>setElapsed(s=>s+1),1000);setStep("recording");
   };
   const stopRec=()=>{mrRef.current?.stop();clearInterval(timerRef.current!);};
-  const sign=()=>{
-    if(password.length<6){setPwError(true);return;}
-    setPwError(false);setStep("processing");setProgress(0);
-    const iv=setInterval(()=>setProgress(p=>{
-      if(p>=100){clearInterval(iv);const tx=fakeTx();setTxHash(tx);setQrData(JSON.stringify({tx,hash,wallet,ts:Date.now()}));setStep("success");return 100;}
-      return p+1.4;
-    }),50);
-  };
   const download=()=>{if(!videoURL)return;const a=document.createElement("a");a.href=videoURL;a.download=`hashmark_${Date.now()}.webm`;a.click();};
-  const reset=()=>{setStep("idle");setVideoURL(null);setHash(null);setTxHash(null);setPassword("");setQrData(null);setProgress(0);};
+  const reset=()=>{setStep("idle");setVideoURL(null);setHash(null);setTxHash(null);setSignErr("");setProgress(0);setTxBlock(null);setTxTs(null);setTxNet("");};
+
+  const sign = async () => {
+    if (!signer || !wallet || !hash) return;
+    if (!CONTRACT_ADDRESS) { setSignErr("CONTRACT_ADDRESS not set. Deploy the contract first."); setStep("error"); return; }
+    setSignErr("");setStep("processing");setProgress(0);
+
+    // Animate progress while waiting for MetaMask + block confirmation
+    const iv = setInterval(()=>setProgress(p=>p<82?p+0.6:p),60);
+    try {
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, HashmarkABI, signer);
+      const tx = await contract.authenticateVideo(hash);
+      setProgress(88);
+      const receipt = await tx.wait();
+      clearInterval(iv);
+      setProgress(100);
+      setTxHash(receipt.hash);
+      // Fetch real block timestamp
+      const provider = signer.provider!;
+      const block = await provider.getBlock(receipt.blockNumber);
+      setTxBlock(receipt.blockNumber);
+      setTxTs(block ? Number(block.timestamp) : Math.floor(Date.now()/1000));
+      const network = await provider.getNetwork();
+      setTxNet(chainName(Number(network.chainId)));
+      setStep("success");
+    } catch (err: unknown) {
+      clearInterval(iv);
+      setProgress(0);
+      const msg = (err as {reason?:string;message?:string}).reason || (err as {message?:string}).message || "Transaction failed";
+      setSignErr(msg.includes("already authenticated") ? "This video is already authenticated on-chain." : msg);
+      setStep("error");
+    }
+  };
 
   const descriptions:Record<RecordStep,string>={
     idle:      "Point your camera and press Start — every frame will be cryptographically fingerprinted.",
     recording: "Recording in progress. Press Stop when done.",
-    preview:   "Review your clip, then authenticate it on-chain.",
-    signing:   "Confirm the transaction details and sign with your wallet password.",
-    processing:"Broadcasting your video's SHA-256 fingerprint to the Hashmark AppChain…",
+    preview:   "Review your clip, then authenticate it on-chain with MetaMask.",
+    signing:   "Connect MetaMask and sign the transaction to seal this video on the blockchain.",
+    processing:"Broadcasting your video's SHA-256 fingerprint to the blockchain…",
     success:   "Authenticated. Your video is permanently sealed on the immutable ledger.",
+    error:     "Authentication failed.",
   };
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18,height:"100%"}}>
-      {/* Description */}
       <p style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.5)",letterSpacing:"0.05em",lineHeight:1.7,flexShrink:0}}>
         {descriptions[step]}
       </p>
@@ -168,7 +232,6 @@ function RecordTab() {
                 <div style={{position:"absolute",left:0,right:0,height:2,pointerEvents:"none",background:"linear-gradient(90deg,transparent,rgba(239,68,68,0.95),transparent)",boxShadow:"0 0 20px rgba(239,68,68,1)",animation:"scanBeam 2.2s linear infinite"}}/>
               </>
             )}
-            {/* Corner brackets */}
             {(["tl","tr","bl","br"] as const).map(p=>(
               <div key={p} style={{
                 position:"absolute",width:20,height:20,pointerEvents:"none",
@@ -217,50 +280,12 @@ function RecordTab() {
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.7)",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:8,fontWeight:500}}>SHA-256 Fingerprint</div>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.5)",wordBreak:"break-all",lineHeight:1.7}}>{hash}</div>
           </Glass>
+          <WalletBanner wallet={wallet} chainId={chainId} connecting={connecting} installed={installed} onConnect={onConnect}/>
           <div style={{display:"flex",gap:12,flexShrink:0}}>
             <Btn outline onClick={reset} style={{flex:1}}>Re-record</Btn>
-            <Btn gold onClick={()=>setStep("signing")} style={{flex:2,gap:10}}>
+            <Btn gold onClick={sign} disabled={!wallet||!signer} style={{flex:2,gap:10}}>
               <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Authenticate on Blockchain
-            </Btn>
-          </div>
-        </div>
-      )}
-
-      {/* SIGNING */}
-      {step==="signing"&&(
-        <div style={{display:"flex",flexDirection:"column",gap:18,flex:1,animation:"fadeUp 0.5s ease both"}}>
-          <Glass style={{padding:20}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(212,168,67,0.65)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:12,fontWeight:500}}>Transaction Details</div>
-            <Row label="Action"   value="Authenticate Media"  color="#ccc"/>
-            <Row label="Hash"     value={short(hash||"")}     color="#D4A843"/>
-            <Row label="Wallet"   value={short(wallet)}       color="#4A9EDB"/>
-            <Row label="Network"  value="Hashmark AppChain"   color="#34d399"/>
-            <Row label="Est. Gas" value="≈ 0.0003 HMK"        color="rgba(255,255,255,0.55)"/>
-          </Glass>
-          <div>
-            <label style={{display:"block",fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.55)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:8,fontWeight:500}}>
-              Wallet Password
-            </label>
-            <input
-              type="password" value={password}
-              onChange={e=>{setPassword(e.target.value);setPwError(false);}}
-              placeholder="Enter password to sign…"
-              style={{
-                width:"100%",padding:"12px 16px",borderRadius:12,
-                background:pwError?"rgba(239,68,68,0.07)":"rgba(255,255,255,0.05)",
-                border:pwError?"1px solid rgba(239,68,68,0.55)":"1px solid rgba(255,255,255,0.12)",
-                color:"#fff",fontFamily:"'DM Mono',monospace",fontSize:13,outline:"none",
-                boxSizing:"border-box",transition:"all 0.3s ease",
-              }}
-            />
-            {pwError&&<p style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"#f87171",marginTop:6,letterSpacing:"0.1em"}}>Minimum 6 characters required</p>}
-          </div>
-          <div style={{display:"flex",gap:12,marginTop:"auto",flexShrink:0}}>
-            <Btn outline onClick={()=>setStep("preview")} style={{flex:1}}>Back</Btn>
-            <Btn gold onClick={sign} style={{flex:2,gap:10}}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0}}><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-              Sign & Authenticate
+              {wallet ? "Sign & Authenticate" : "Connect Wallet First"}
             </Btn>
           </div>
         </div>
@@ -285,47 +310,50 @@ function RecordTab() {
           <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8}}>
             <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:24,fontWeight:300,color:"#fff"}}>Anchoring to Ledger</div>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.1em"}}>
-              {progress<30?"Computing cryptographic fingerprint…":progress<60?"Broadcasting to AppChain nodes…":progress<85?"Awaiting block confirmation…":"Sealing immutable record…"}
+              {progress<30?"Waiting for MetaMask confirmation…":progress<60?"Broadcasting to blockchain nodes…":progress<88?"Waiting for block confirmation…":"Sealing immutable record…"}
             </div>
           </div>
           <div style={{width:"100%",height:3,background:"rgba(255,255,255,0.06)",borderRadius:4,overflow:"hidden"}}>
-            <div style={{height:"100%",width:`${progress}%`,background:"linear-gradient(90deg,#D4A843,#9B59E8)",boxShadow:"0 0 14px rgba(212,168,67,0.7)",transition:"width 0.08s linear",borderRadius:4}}/>
+            <div style={{height:"100%",width:`${progress}%`,background:"linear-gradient(90deg,#D4A843,#9B59E8)",boxShadow:"0 0 14px rgba(212,168,67,0.7)",transition:"width 0.1s linear",borderRadius:4}}/>
           </div>
         </div>
       )}
 
       {/* SUCCESS */}
-      {step==="success"&&qrData&&txHash&&hash&&(
+      {step==="success"&&txHash&&hash&&(
         <div style={{display:"flex",flexDirection:"column",gap:18,flex:1,overflowY:"auto",animation:"fadeUp 0.6s ease both"}}>
           <div style={{display:"flex",alignItems:"center",gap:16,padding:16,borderRadius:18,background:"rgba(52,211,153,0.08)",border:"1.5px solid rgba(52,211,153,0.3)",boxShadow:"0 0 36px rgba(52,211,153,0.1)"}}>
             <div style={{width:48,height:48,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,background:"rgba(52,211,153,0.15)",border:"2px solid rgba(52,211,153,0.5)",boxShadow:"0 0 24px rgba(52,211,153,0.35)",animation:"popIn 0.5s cubic-bezier(0.4,0,0.2,1) both"}}>✓</div>
             <div>
               <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:22,fontWeight:300,color:"#34d399",marginBottom:4}}>Successfully Authenticated</div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.55)",letterSpacing:"0.1em"}}>Permanently sealed on the Hashmark ledger</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.55)",letterSpacing:"0.1em"}}>Permanently sealed on-chain</div>
             </div>
           </div>
           <div style={{display:"flex",gap:18,flexWrap:"wrap",alignItems:"flex-start"}}>
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,flexShrink:0}}>
-              <QRCode data={qrData} accent="#34d399"/>
+              <QRImg hash={hash}/>
               <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.14em",textTransform:"uppercase"}}>Scan to verify</span>
             </div>
             <Glass style={{flex:1,minWidth:180,padding:16}}>
-              <Row label="TX Hash"    value={short(txHash)} color="#4A9EDB"/>
-              <Row label="Video Hash" value={short(hash)}   color="#D4A843"/>
-              <Row label="Wallet"     value={short(wallet)} color="#9B59E8"/>
-              <Row label="Network"    value="Hashmark AppChain" color="#34d399"/>
-              <Row label="Timestamp"  value={new Date().toISOString().slice(0,19).replace("T"," ")} color="rgba(255,255,255,0.6)"/>
-              <Row label="Status"     value="Immutable ✓"  color="#34d399"/>
+              <Row label="TX Hash"    value={short(txHash)}                         color="#4A9EDB"/>
+              <Row label="Video Hash" value={short(hash)}                           color="#D4A843"/>
+              <Row label="Wallet"     value={short(wallet||"")}                     color="#9B59E8"/>
+              <Row label="Network"    value={txNet||chainName(chainId||0)}          color="#34d399"/>
+              <Row label="Block"      value={txBlock ? `#${txBlock.toLocaleString()}` : "—"}  color="rgba(255,255,255,0.6)"/>
+              <Row label="Timestamp"  value={fmtTs(txTs||0)}                       color="rgba(255,255,255,0.6)"/>
+              <Row label="Status"     value="Immutable ✓"                          color="#34d399"/>
             </Glass>
           </div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",flexShrink:0}}>
             <Btn gold onClick={download} style={{flex:1,minWidth:110,gap:8}}>
               <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0}}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download
+              Download Video
             </Btn>
             <Btn gold outline onClick={()=>{
-              const b=new Blob([JSON.stringify({txHash,hash,wallet,ts:new Date().toISOString()},null,2)],{type:"application/json"});
-              const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="hashmark_cert.json";a.click();
+              if(!txHash||!hash||!wallet)return;
+              const data={txHash,videoHash:hash,creator:wallet,block:txBlock,timestamp:fmtTs(txTs||0),network:txNet||chainName(chainId||0)};
+              const b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+              const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`hashmark_cert_${hash.slice(0,8)}.json`;a.click();
             }} style={{flex:1,minWidth:120,gap:8}}>
               <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{flexShrink:0}}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Certificate
@@ -334,29 +362,66 @@ function RecordTab() {
           </div>
         </div>
       )}
+
+      {/* ERROR */}
+      {step==="error"&&(
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,animation:"fadeUp 0.5s ease both",padding:"0 8px"}}>
+          <div style={{width:56,height:56,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,background:"rgba(219,74,74,0.1)",border:"2px solid rgba(219,74,74,0.45)"}}>✕</div>
+          <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:24,color:"#f87171"}}>Transaction Failed</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(248,113,113,0.7)",letterSpacing:"0.06em",lineHeight:1.7,maxWidth:280}}>{signErr}</div>
+          </div>
+          <Btn outline onClick={()=>setStep("preview")}>Back to Preview</Btn>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ════════════════════════════════ VERIFY TAB ════════════════════════════════ */
-function VerifyTab() {
-  const [step,setStep]         = useState<VerifyStep>("idle");
-  const [drag,setDrag]         = useState(false);
-  const [fileName,setFileName] = useState<string|null>(null);
-  const [hash,setHash]         = useState<string|null>(null);
-  const [videoURL,setVideoURL] = useState<string|null>(null);
-  const [txHash]               = useState(fakeTx);
-  const [wallet]               = useState(fakeAddr);
-  const inputRef               = useRef<HTMLInputElement>(null);
+interface VerifyResult { creator: string; timestamp: number; hash: string; }
 
-  const processFile=async(file:File)=>{
-    if(!file.type.startsWith("video/"))return;
-    setFileName(file.name);setVideoURL(URL.createObjectURL(file));setStep("hashing");
-    const h=await sha256(file);setHash(h);
-    await new Promise(r=>setTimeout(r,2000));
-    setStep(Math.random()>0.25?"verified":"failed");
+function VerifyTab() {
+  const [step,setStep]       = useState<VerifyStep>("idle");
+  const [drag,setDrag]       = useState(false);
+  const [fileName,setFileName] = useState<string|null>(null);
+  const [hash,setHash]       = useState<string|null>(null);
+  const [videoURL,setVideoURL] = useState<string|null>(null);
+  const [result,setResult]   = useState<VerifyResult|null>(null);
+  const [errMsg,setErrMsg]   = useState("");
+  const inputRef             = useRef<HTMLInputElement>(null);
+
+  const processFile = async (file: File) => {
+    if (!file.type.startsWith("video/")) return;
+    setFileName(file.name);
+    setVideoURL(URL.createObjectURL(file));
+    setResult(null);
+    setErrMsg("");
+    setStep("hashing");
+
+    try {
+      const h = await sha256(file);
+      setHash(h);
+
+      // Query the blockchain via backend
+      const res  = await fetch(`/api/verify/${encodeURIComponent(h)}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Server error");
+
+      if (data.authenticated) {
+        setResult({ creator: data.creator, timestamp: data.timestamp, hash: h });
+        setStep("verified");
+      } else {
+        setStep("not_found");
+      }
+    } catch (e: unknown) {
+      setErrMsg((e as {message?:string}).message || "Verification failed");
+      setStep("error");
+    }
   };
-  const reset=()=>{setStep("idle");setHash(null);setFileName(null);setVideoURL(null);};
+
+  const reset = () => { setStep("idle"); setHash(null); setFileName(null); setVideoURL(null); setResult(null); setErrMsg(""); };
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18,flex:1,minHeight:0}}>
@@ -418,14 +483,14 @@ function VerifyTab() {
           </div>
           <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8}}>
             <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:22,fontWeight:300,color:"#fff"}}>Analysing Video</div>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.4)",letterSpacing:"0.1em"}}>Computing SHA-256 · Querying ledger…</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.4)",letterSpacing:"0.1em"}}>Computing SHA-256 · Querying blockchain…</div>
           </div>
           {hash&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"rgba(255,255,255,0.2)",maxWidth:300,textAlign:"center",wordBreak:"break-all",lineHeight:1.7,padding:"0 16px"}}>{hash}</div>}
         </div>
       )}
 
       {/* VERIFIED */}
-      {step==="verified"&&hash&&(
+      {step==="verified"&&hash&&result&&(
         <div style={{display:"flex",flexDirection:"column",gap:14,flex:1,minHeight:0,overflowY:"auto",animation:"fadeUp 0.5s ease both"}}>
           {videoURL&&(
             <div style={{borderRadius:18,overflow:"hidden",border:"1px solid rgba(52,211,153,0.35)",flexShrink:0,maxHeight:190}}>
@@ -436,30 +501,34 @@ function VerifyTab() {
             <div style={{width:44,height:44,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,background:"rgba(52,211,153,0.13)",border:"2px solid rgba(52,211,153,0.45)",animation:"popIn 0.4s cubic-bezier(0.4,0,0.2,1) both"}}>✓</div>
             <div>
               <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:20,fontWeight:300,color:"#34d399",marginBottom:4}}>Authenticity Verified</div>
-              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.55)",letterSpacing:"0.08em"}}>{fileName} — found on Hashmark ledger</div>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(52,211,153,0.55)",letterSpacing:"0.08em"}}>{fileName} — found on blockchain</div>
             </div>
           </div>
-          <Glass style={{padding:16}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:12,fontWeight:500}}>Blockchain Record</div>
-            <Row label="SHA-256"     value={hash}           color="#D4A843"/>
-            <Row label="TX Hash"     value={short(txHash)}  color="#4A9EDB"/>
-            <Row label="Recorded By" value={short(wallet)}  color="#9B59E8"/>
-            <Row label="Network"     value="Hashmark AppChain" color="#34d399"/>
-            <Row label="Recorded"    value="2025-01-15 14:32:08 UTC" color="rgba(255,255,255,0.6)"/>
-            <Row label="Block"       value="#4,872,341"     color="rgba(255,255,255,0.6)"/>
-          </Glass>
+          <div style={{display:"flex",gap:18,flexWrap:"wrap",alignItems:"flex-start"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8,flexShrink:0}}>
+              <QRImg hash={hash}/>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.12em",textTransform:"uppercase"}}>Scan to share</span>
+            </div>
+            <Glass style={{flex:1,minWidth:160,padding:16}}>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:12,fontWeight:500}}>Blockchain Record</div>
+              <Row label="SHA-256"     value={short(hash)}                      color="#D4A843"/>
+              <Row label="Authenticated By" value={short(result.creator)}       color="#9B59E8"/>
+              <Row label="Timestamp"   value={fmtTs(result.timestamp)}          color="rgba(255,255,255,0.6)"/>
+              <Row label="Status"      value="Authentic ✓"                     color="#34d399"/>
+            </Glass>
+          </div>
           <Btn outline onClick={reset} full>Verify Another</Btn>
         </div>
       )}
 
-      {/* FAILED */}
-      {step==="failed"&&(
+      {/* NOT FOUND */}
+      {step==="not_found"&&(
         <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:24,animation:"fadeUp 0.5s ease both"}}>
           <div style={{width:64,height:64,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,background:"rgba(219,74,74,0.1)",border:"2px solid rgba(219,74,74,0.45)",boxShadow:"0 0 32px rgba(219,74,74,0.2)"}}>✕</div>
           <div style={{textAlign:"center",display:"flex",flexDirection:"column",gap:8,padding:"0 16px"}}>
-            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:26,color:"#f87171"}}>Not Verified</div>
+            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:26,color:"#f87171"}}>Not Found on Chain</div>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"rgba(255,255,255,0.45)",letterSpacing:"0.06em",maxWidth:280,lineHeight:1.7}}>
-              This video was not found on the Hashmark ledger or has been altered since authentication.
+              This video has no authentication record on the blockchain. It may be unregistered or tampered.
             </div>
           </div>
           {hash&&(
@@ -471,14 +540,107 @@ function VerifyTab() {
           <Btn red onClick={reset}>Try Another Video</Btn>
         </div>
       )}
+
+      {/* ERROR */}
+      {step==="error"&&(
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,animation:"fadeUp 0.5s ease both"}}>
+          <div style={{width:56,height:56,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,background:"rgba(219,74,74,0.1)",border:"2px solid rgba(219,74,74,0.45)"}}>!</div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:22,color:"#f87171",marginBottom:8}}>Verification Error</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:"rgba(248,113,113,0.6)",lineHeight:1.7,maxWidth:280}}>{errMsg || "Could not reach the backend. Ensure it is running on port 4000."}</div>
+          </div>
+          <Btn outline onClick={reset}>Try Again</Btn>
+        </div>
+      )}
     </div>
   );
 }
 
 /* ════════════════════════════════ ROOT ════════════════════════════════ */
 export default function HashmarkApp() {
-  const [tab,setTab] = useState<Tab>("record");
-  const BG_VIDEO     = "/videos/hashmark-bg.mp4";
+  const [tab,setTab]           = useState<Tab>("record");
+  const [wallet,setWallet]     = useState<string|null>(null);
+  const [signer,setSigner]     = useState<ethers.JsonRpcSigner|null>(null);
+  const [chainId,setChainId]   = useState<number|null>(null);
+  const [connecting,setConn]   = useState(false);
+  const installed               = typeof window !== "undefined" && !!window.ethereum;
+
+  // Auto-reconnect if already approved
+  useEffect(()=>{
+    if (!window.ethereum) return;
+    (window.ethereum as {request:(a:{method:string;params?:unknown[]})=>Promise<string[]>})
+      .request({method:"eth_accounts"})
+      .then(async (accounts: string[])=>{
+        if (accounts[0]) {
+          const provider = new ethers.BrowserProvider(window.ethereum as ethers.Eip1193Provider);
+          const s = await provider.getSigner();
+          const net = await provider.getNetwork();
+          setWallet(accounts[0]);
+          setSigner(s);
+          setChainId(Number(net.chainId));
+        }
+      }).catch(()=>{});
+    // Listen for account / chain changes
+    const eth = window.ethereum as {on:(e:string,cb:(...a:unknown[])=>void)=>void;removeListener:(e:string,cb:(...a:unknown[])=>void)=>void};
+    const onAccounts = (accs: unknown) => {
+      const accounts = accs as string[];
+      if (!accounts[0]) { setWallet(null); setSigner(null); setChainId(null); }
+      else setWallet(accounts[0]);
+    };
+    const onChain = (cid: unknown) => setChainId(parseInt(cid as string, 16));
+    eth.on("accountsChanged", onAccounts);
+    eth.on("chainChanged", onChain);
+    return () => { eth.removeListener("accountsChanged", onAccounts); eth.removeListener("chainChanged", onChain); };
+  },[]);
+
+  const connectWallet = async () => {
+    if (!window.ethereum) return;
+    setConn(true);
+    try {
+      const eth = window.ethereum as { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> };
+
+      // 1. Request accounts first
+      await eth.request({ method: "eth_requestAccounts" });
+
+      const targetChainId = parseInt(import.meta.env.VITE_CHAIN_ID || "1337", 10);
+      const targetChainHex = "0x" + targetChainId.toString(16);
+      const rpcUrl = import.meta.env.VITE_RPC_URL || "http://127.0.0.1:8545";
+
+      // 2. Try to switch to the target chain; if not added yet, add it with full metadata
+      //    (MetaMask crashes internally when nativeCurrency/chainName are undefined)
+      try {
+        await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: targetChainHex }] });
+      } catch (switchErr: unknown) {
+        const code = (switchErr as { code?: number }).code;
+        // 4902 = chain not added to MetaMask
+        if (code === 4902) {
+          const isLocal = targetChainId === 1337 || targetChainId === 31337;
+          await eth.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: targetChainHex,
+              chainName: isLocal ? "Hashmark Local (Anvil)" : `Chain ${targetChainId}`,
+              rpcUrls: [rpcUrl],
+              nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+              blockExplorerUrls: null,
+            }],
+          });
+        }
+        // If user rejected switch, continue anyway with current network
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum as ethers.Eip1193Provider);
+      const s = await provider.getSigner();
+      const addr = await s.getAddress();
+      const net = await provider.getNetwork();
+      setWallet(addr);
+      setSigner(s);
+      setChainId(Number(net.chainId));
+    } catch { /* user rejected */ }
+    finally { setConn(false); }
+  };
+
+  const BG_VIDEO = "/videos/hashmark-bg.mp4";
 
   return(
     <>
@@ -513,13 +675,8 @@ export default function HashmarkApp() {
       {/* Full-screen layout */}
       <div style={{position:"fixed",inset:0,zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",overflow:"hidden"}}>
 
-        {/* ── LOGO HEADER outside card ── */}
-        <header style={{
-          width:"100%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between",
-          padding:"16px 24px",
-          animation:"logoIn 0.8s cubic-bezier(0.4,0,0.2,1) both 0.05s",
-        }}>
-          {/* Left: icon + wordmark */}
+        {/* ── LOGO HEADER ── */}
+        <header style={{width:"100%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 24px",animation:"logoIn 0.8s cubic-bezier(0.4,0,0.2,1) both 0.05s"}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:36,height:36,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"rgba(212,168,67,0.1)",border:"1px solid rgba(212,168,67,0.22)"}}>
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
@@ -534,14 +691,19 @@ export default function HashmarkApp() {
               <span style={{fontFamily:"'DM Mono',monospace",fontSize:8,letterSpacing:"0.16em",color:"#D4A843",padding:"3px 8px",border:"1px solid rgba(212,168,67,0.28)",borderRadius:6,background:"rgba(212,168,67,0.08)",textTransform:"uppercase",lineHeight:1}}>PROTOCOL</span>
             </div>
           </div>
-          {/* Right: Ledger Live */}
-          <div style={{display:"flex",alignItems:"center",gap:7,padding:"6px 14px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
-            <div style={{width:5,height:5,borderRadius:"50%",background:"#34d399",flexShrink:0,animation:"blink 2s ease-in-out infinite"}}/>
-            <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#34d399",letterSpacing:"0.18em",textTransform:"uppercase"}}>Ledger Live</span>
-          </div>
+          {/* Wallet status in header */}
+          {wallet
+            ? <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 14px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
+                <div style={{width:5,height:5,borderRadius:"50%",background:"#34d399",flexShrink:0}}/>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#34d399",letterSpacing:"0.14em"}}>{short(wallet)}</span>
+              </div>
+            : <div style={{display:"flex",alignItems:"center",gap:7,padding:"6px 14px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
+                <div style={{width:5,height:5,borderRadius:"50%",background:"#34d399",flexShrink:0,animation:"blink 2s ease-in-out infinite"}}/>
+                <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#34d399",letterSpacing:"0.18em",textTransform:"uppercase"}}>Ledger Live</span>
+              </div>
+          }
         </header>
 
-        {/* Thin divider rule */}
         <div style={{width:"100%",flexShrink:0,padding:"0 24px"}}>
           <div style={{height:1,background:"linear-gradient(90deg,transparent,rgba(212,168,67,0.2) 35%,rgba(155,89,232,0.15) 70%,transparent)"}}/>
         </div>
@@ -551,36 +713,25 @@ export default function HashmarkApp() {
           <div style={{
             width:"100%",maxWidth:520,height:"100%",maxHeight:760,
             display:"flex",flexDirection:"column",overflow:"hidden",
-            background:"rgba(10,10,22,0.84)",
-            backdropFilter:"blur(32px)",
-            WebkitBackdropFilter:"blur(32px)",
-            border:"1px solid rgba(255,255,255,0.08)",
-            borderRadius:24,
+            background:"rgba(10,10,22,0.84)",backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",
+            border:"1px solid rgba(255,255,255,0.08)",borderRadius:24,
             boxShadow:"0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.06)",
-            animation:"cardIn 0.9s cubic-bezier(0.4,0,0.2,1) both 0.15s",
-            position:"relative",
+            animation:"cardIn 0.9s cubic-bezier(0.4,0,0.2,1) both 0.15s",position:"relative",
           }}>
-            {/* Shimmer line */}
             <div style={{position:"absolute",top:0,left:32,right:32,height:1,pointerEvents:"none",background:"linear-gradient(90deg,transparent,rgba(212,168,67,0.35) 40%,rgba(155,89,232,0.22) 70%,transparent)"}}/>
 
-            {/* Card header */}
             <div style={{padding:"24px 24px 0",flexShrink:0}}>
               {/* Tabs */}
               <div style={{display:"flex",gap:6,padding:6,borderRadius:18,marginBottom:20,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
                 {([
-                  {id:"record" as Tab,
-                   icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" style={{flexShrink:0}}><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>,
-                   label:"Record & Authenticate"},
-                  {id:"verify" as Tab,
-                   icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>,
-                   label:"Verify Videos"},
+                  {id:"record" as Tab,icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" style={{flexShrink:0}}><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>,label:"Record & Authenticate"},
+                  {id:"verify" as Tab,icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>,label:"Verify Videos"},
                 ]).map(({id,icon,label})=>{
                   const active=tab===id;
                   return(
                     <button key={id} onClick={()=>setTab(id)} style={{
                       flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                      padding:"10px 12px",borderRadius:12,border:"none",cursor:"pointer",
-                      transition:"all 0.3s ease",
+                      padding:"10px 12px",borderRadius:12,border:"none",cursor:"pointer",transition:"all 0.3s ease",
                       background:active?"rgba(212,168,67,0.12)":"transparent",
                       boxShadow:active?"inset 0 0 0 1px rgba(212,168,67,0.25),0 0 24px rgba(212,168,67,0.1)":"none",
                       color:active?"#D4A843":"rgba(255,255,255,0.38)",
@@ -591,21 +742,20 @@ export default function HashmarkApp() {
                   );
                 })}
               </div>
-
-              {/* Section title */}
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
                 <div style={{width:3,height:20,borderRadius:2,flexShrink:0,background:"linear-gradient(180deg,#D4A843,#9B59E8)"}}/>
                 <span style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:20,fontWeight:300,color:"#fff",lineHeight:1.3}}>
                   {tab==="record"?"Record Authenticated Video":"Verify Video Authenticity"}
                 </span>
               </div>
-              {/* Divider */}
               <div style={{height:1,marginBottom:20,background:"linear-gradient(90deg,rgba(212,168,67,0.28),transparent)"}}/>
             </div>
 
-            {/* Card body */}
             <div style={{flex:1,minHeight:0,padding:"0 24px 24px",overflowY:"auto",display:"flex",flexDirection:"column"}}>
-              {tab==="record"?<RecordTab/>:<VerifyTab/>}
+              {tab==="record"
+                ? <RecordTab wallet={wallet} signer={signer} chainId={chainId} connecting={connecting} installed={installed} onConnect={connectWallet}/>
+                : <VerifyTab/>
+              }
             </div>
           </div>
         </div>

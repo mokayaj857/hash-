@@ -9,6 +9,7 @@ import Header from './Components/Header';
 import Scroll from './Components/scroll';
 import ErrorPage from './Components/ErrorPage';
 import White from './Components/white';
+import Verify from './Components/Verify';
 import './index.css';
 const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ const router = createBrowserRouter([
   {
     path: "white",
     element: <White />,
+  },
+  {
+    path: "verify",
+    element: <Verify />,
   },
   {
     path: "scroll",

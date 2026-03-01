@@ -1,7 +1,8 @@
 "use strict";
 
-const express = require("express");
-const crypto  = require("crypto");
+const express  = require("express");
+const crypto   = require("crypto");
+const QRCode   = require("qrcode");
 const { ethers } = require("ethers");
 const { upload }           = require("../middleware/upload");
 const { getContractSetup } = require("../config/contract");
@@ -150,6 +151,103 @@ router.get("/info", (_req, res) => {
     serverWallet:       signer ? (/** @type {import("ethers").Wallet} */ (signer)).address : null,
     serverSigning:      !!signer,
   });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GET /api/stats
+   Live on-chain stats: total proofs authenticated + 5 most-recent proofs.
+   Returns zeros gracefully when the node is unreachable.
+───────────────────────────────────────────────────────────────────────────── */
+router.get("/stats", async (_req, res) => {
+  const { contract, provider } = getContractSetup();
+  try {
+    const filter = contract.filters.VideoAuthenticated();
+    const [events, blockNumber] = await Promise.all([
+      contract.queryFilter(filter),
+      provider.getBlockNumber(),
+    ]);
+
+    const recent = events
+      .slice(-5)
+      .reverse()
+      .map((e) => ({
+        videoHash:   e.args.videoHash,
+        creator:     e.args.creator,
+        timestamp:   Number(e.args.timestamp),
+        blockNumber: Number(e.blockNumber),
+        txHash:      e.transactionHash,
+      }));
+
+    res.json({ totalProofs: events.length, recentProofs: recent, blockNumber: Number(blockNumber) });
+  } catch (err) {
+    // Node not running — return safe zeros rather than an error
+    if (err.code === "ECONNREFUSED" || err.code === "SERVER_ERROR") {
+      return res.json({ totalProofs: 0, recentProofs: [], blockNumber: 0, offline: true });
+    }
+    console.error("[stats]", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GET /api/recent?limit=20
+   Paginated list of VideoAuthenticated events, newest first.
+───────────────────────────────────────────────────────────────────────────── */
+router.get("/recent", async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 20, 100);
+  const { contract, provider } = getContractSetup();
+  try {
+    const filter = contract.filters.VideoAuthenticated();
+    const [events, blockNumber] = await Promise.all([
+      contract.queryFilter(filter),
+      provider.getBlockNumber(),
+    ]);
+
+    const proofs = events
+      .slice(-limit)
+      .reverse()
+      .map((e) => ({
+        videoHash:   e.args.videoHash,
+        creator:     e.args.creator,
+        timestamp:   Number(e.args.timestamp),
+        blockNumber: Number(e.blockNumber),
+        txHash:      e.transactionHash,
+      }));
+
+    res.json({ proofs, total: events.length, blockNumber: Number(blockNumber) });
+  } catch (err) {
+    if (err.code === "ECONNREFUSED" || err.code === "SERVER_ERROR") {
+      return res.json({ proofs: [], total: 0, blockNumber: 0, offline: true });
+    }
+    console.error("[recent]", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   GET /api/qr/:hash
+   Generate a QR code PNG (data URL) linking to the verify page for this hash.
+   The verify URL is: FRONTEND_URL/verify?hash=<hash>
+───────────────────────────────────────────────────────────────────────────── */
+router.get("/qr/:hash", async (req, res) => {
+  const hash = req.params.hash?.trim();
+  if (!hash) return res.status(400).json({ error: "Hash parameter is required." });
+
+  const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
+  const verifyUrl   = `${frontendUrl}/verify?hash=${encodeURIComponent(hash)}`;
+
+  try {
+    const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+      errorCorrectionLevel: "M",
+      margin: 2,
+      width: 300,
+      color: { dark: "#000000", light: "#ffffff" },
+    });
+    res.json({ qrDataUrl, verifyUrl, hash });
+  } catch (err) {
+    console.error("[qr]", err);
+    res.status(500).json({ error: "QR code generation failed.", detail: err.message });
+  }
 });
 
 module.exports = router;

@@ -32,6 +32,34 @@ export interface InfoResult {
   serverSigning: boolean;
 }
 
+export interface ProofEvent {
+  videoHash: string;
+  creator: string;
+  timestamp: number;
+  blockNumber: number;
+  txHash: string;
+}
+
+export interface StatsResult {
+  totalProofs: number;
+  recentProofs: ProofEvent[];
+  blockNumber: number;
+  offline?: boolean;
+}
+
+export interface RecentResult {
+  proofs: ProofEvent[];
+  total: number;
+  blockNumber: number;
+  offline?: boolean;
+}
+
+export interface QrResult {
+  qrDataUrl: string;
+  verifyUrl: string;
+  hash: string;
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -73,6 +101,24 @@ export async function authenticateHash(hash: string): Promise<AuthenticateResult
 export async function verifyHash(hash: string): Promise<VerifyResult> {
   const res = await fetch(`${BASE}/verify/${encodeURIComponent(hash)}`);
   return handleResponse<VerifyResult>(res);
+}
+
+/** Get live on-chain stats: total proofs + 5 most recent. */
+export async function getStats(): Promise<StatsResult> {
+  const res = await fetch(`${BASE}/stats`);
+  return handleResponse<StatsResult>(res);
+}
+
+/** Get paginated list of recent VideoAuthenticated events. */
+export async function getRecent(limit = 20): Promise<RecentResult> {
+  const res = await fetch(`${BASE}/recent?limit=${limit}`);
+  return handleResponse<RecentResult>(res);
+}
+
+/** Get a QR code data URL linking to the verify page for a hash. */
+export async function getQrCode(hash: string): Promise<QrResult> {
+  const res = await fetch(`${BASE}/qr/${encodeURIComponent(hash)}`);
+  return handleResponse<QrResult>(res);
 }
 
 /** Get backend / contract info. */

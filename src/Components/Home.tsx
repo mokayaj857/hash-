@@ -1,8 +1,7 @@
-"use client";
-
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Footer from "./Footer";
+import { getStats } from "../api";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    PANEL DATA
@@ -525,6 +524,7 @@ export default function HashmarkPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dark, setDark] = useState(true);
+  const [totalProofs, setTotalProofs] = useState<number | null>(null);
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* Responsive */
@@ -533,6 +533,20 @@ export default function HashmarkPage() {
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
+  }, []);
+
+  /* Fetch live proof count every 20 s */
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await getStats();
+        if (!cancelled) setTotalProofs(data.totalProofs);
+      } catch { /* offline — keep null */ }
+    };
+    load();
+    const id = setInterval(load, 20_000);
+    return () => { cancelled = true; clearInterval(id); };
   }, []);
 
   /* Auto-rotate active panel every 5 s when not hovered */
@@ -1000,6 +1014,18 @@ export default function HashmarkPage() {
               }}
             >
               If something matters, it deserves proof. — © {new Date().getFullYear()} Hashmark Protocol
+            </span>
+          )}
+
+          {/* Live proof count */}
+          {!isMobile && (
+            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 9, color: "#555", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+              {totalProofs !== null && (
+                <>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 6px #4ade80", display: "inline-block" }} />
+                  {totalProofs.toLocaleString()} proof{totalProofs !== 1 ? "s" : ""} on-chain
+                </>
+              )}
             </span>
           )}
 
