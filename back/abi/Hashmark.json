@@ -1,0 +1,33 @@
+[
+  {
+    "inputs": [
+      { "internalType": "string", "name": "videoHash", "type": "string" }
+    ],
+    "name": "authenticateVideo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "videoHash", "type": "string" }
+    ],
+    "name": "verifyVideo",
+    "outputs": [
+      { "internalType": "address", "name": "creator", "type": "address" },
+      { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "string",  "name": "videoHash", "type": "string"  },
+      { "indexed": true,  "internalType": "address", "name": "creator",   "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "VideoAuthenticated",
+    "type": "event"
+  }
+]

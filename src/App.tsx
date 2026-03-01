@@ -5,6 +5,7 @@ import Header from "./Components/Header";
 import Nav from "./Components/Nav";
 import Scroll from "./Components/scroll";
 import White from "./Components/white";
+import Verify from "./Components/Verify";
 const App = () => {
   return (
     <Router>
@@ -16,6 +17,7 @@ const App = () => {
         <Route path="white" element={<White />} />
         <Route path="header" element={<Header />} />
         <Route path="scroll" element={<Scroll />} />
+        <Route path="verify" element={<Verify />} />
         {/* <Route path="weather" element={<Weather />} /> */}
         {/* <Route path="kenya" element={<Kenya />} /> */}
         {/* <Route path="home" element={<Home />} /> */}
