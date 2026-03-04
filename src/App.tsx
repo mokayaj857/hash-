@@ -11,13 +11,13 @@ const App = () => {
     <Router>
       <Routes>
         {/* Qrcode under Testimonials */}
-        <Route path="hero" element={<Hero />} /> 
+        <Route path="/hero" element={<Hero />} /> 
         <Route path="/" element={<Home />} />
-        <Route path="nav" element={<Nav />} />
-        <Route path="white" element={<White />} />
-        <Route path="header" element={<Header />} />
-        <Route path="scroll" element={<Scroll />} />
-        <Route path="verify" element={<Verify />} />
+        <Route path="/nav" element={<Nav />} />
+        <Route path="/white" element={<White />} />
+        <Route path="/header" element={<Header />} />
+        <Route path="/scroll" element={<Scroll />} />
+        <Route path="/verify" element={<Verify />} />
         {/* <Route path="weather" element={<Weather />} /> */}
         {/* <Route path="kenya" element={<Kenya />} /> */}
         {/* <Route path="home" element={<Home />} /> */}
