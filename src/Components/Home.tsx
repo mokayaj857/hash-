@@ -779,7 +779,7 @@ export default function HashmarkPage() {
               <div style={{ width: 1, height: 22, background: dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)", margin: "0 4px" }} />
 
               {/* Get Started CTA */}
-              <a href="http://localhost:5173/nav"
+              <a href="/nav"
                 style={{
                   marginLeft: 4, fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase",
                   textDecoration: "none", fontWeight: 700, fontFamily: "'DM Mono', monospace",
