@@ -36,7 +36,7 @@ function QRImg({ hash }: { hash: string }) {
       .catch(() => {});
   }, [hash]);
   return (
-    <div style={{width:180,height:180,borderRadius:16,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
+    <div style={{width:"min(180px,40vw)",height:"min(180px,40vw)",borderRadius:16,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
       {src
         ? <img src={src} alt="QR Code" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
         : <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#999",letterSpacing:"0.1em"}}>Loading QR…</span>
@@ -260,13 +260,13 @@ function RecordTab({ wallet, signer, chainId, connecting, installed, onConnect }
           </div>
           <div style={{display:"flex",justifyContent:"center",flexShrink:0}}>
             {step==="idle"&&(
-              <Btn red onClick={startRec} style={{padding:"12px 48px",gap:10}}>
+              <Btn red onClick={startRec} style={{padding:"12px 32px",gap:10,width:"100%",maxWidth:280}}>
                 <span style={{width:10,height:10,borderRadius:"50%",background:"rgba(0,0,0,0.3)",display:"inline-block",flexShrink:0}}/>
                 Start Recording
               </Btn>
             )}
             {step==="recording"&&(
-              <Btn outline onClick={stopRec} style={{padding:"12px 48px",gap:10,borderColor:"rgba(239,68,68,0.45)",color:"#f87171"}}>
+              <Btn outline onClick={stopRec} style={{padding:"12px 32px",gap:10,borderColor:"rgba(239,68,68,0.45)",color:"#f87171",width:"100%",maxWidth:280}}>
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" style={{flexShrink:0}}><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
                 Stop Recording
               </Btn>
@@ -588,7 +588,14 @@ export default function HashmarkApp() {
   const [signer,setSigner]     = useState<ethers.JsonRpcSigner|null>(null);
   const [chainId,setChainId]   = useState<number|null>(null);
   const [connecting,setConn]   = useState(false);
+  const [isMobile,setIsMobile] = useState(()=>window.innerWidth<=640);
   const installed               = !!getMetaMaskProvider();
+
+  useEffect(()=>{
+    const onResize=()=>setIsMobile(window.innerWidth<=640);
+    window.addEventListener("resize",onResize);
+    return()=>window.removeEventListener("resize",onResize);
+  },[]);
 
   // Auto-reconnect if already approved
   useEffect(()=>{
@@ -688,6 +695,7 @@ export default function HashmarkApp() {
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
         html,body,#root,#__next{width:100%;height:100%;background:#060610;-webkit-font-smoothing:antialiased;}
         body{overflow:hidden;}
+        @media(max-width:640px){body{overflow:auto;}}
         input{font-family:'DM Mono',monospace;}
         input::placeholder{color:rgba(255,255,255,0.22);}
         ::-webkit-scrollbar{width:3px;}
@@ -712,12 +720,12 @@ export default function HashmarkApp() {
       </div>
 
       {/* Full-screen layout */}
-      <div style={{position:"fixed",inset:0,zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",overflow:"hidden"}}>
+      <div style={{position:"fixed",inset:0,zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",overflow:isMobile?"auto":"hidden"}}>
 
         {/* ── LOGO HEADER ── */}
-        <header style={{width:"100%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"16px 24px",animation:"logoIn 0.8s cubic-bezier(0.4,0,0.2,1) both 0.05s"}}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:36,height:36,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"rgba(212,168,67,0.1)",border:"1px solid rgba(212,168,67,0.22)"}}>
+        <header style={{width:"100%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"space-between",padding:isMobile?"12px 16px":"16px 24px",animation:"logoIn 0.8s cubic-bezier(0.4,0,0.2,1) both 0.05s"}}>
+          <div style={{display:"flex",alignItems:"center",gap:isMobile?8:12}}>
+            <div style={{width:isMobile?30:36,height:isMobile?30:36,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,background:"rgba(212,168,67,0.1)",border:"1px solid rgba(212,168,67,0.22)"}}>
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                 <line x1="6"  y1="2"  x2="4"   y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
                 <line x1="13" y1="2"  x2="11"  y2="18" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
@@ -725,20 +733,20 @@ export default function HashmarkApp() {
                 <line x1="1.5"y1="13" x2="17.5"y2="13" stroke="#D4A843" strokeWidth="1.6" strokeLinecap="round"/>
               </svg>
             </div>
-            <div style={{display:"flex",alignItems:"baseline",gap:10}}>
-              <span style={{fontFamily:"'DM Mono',monospace",fontSize:15,letterSpacing:"0.3em",color:"rgba(255,255,255,0.92)",textTransform:"uppercase",lineHeight:1}}>HASHMARK</span>
-              <span style={{fontFamily:"'DM Mono',monospace",fontSize:8,letterSpacing:"0.16em",color:"#D4A843",padding:"3px 8px",border:"1px solid rgba(212,168,67,0.28)",borderRadius:6,background:"rgba(212,168,67,0.08)",textTransform:"uppercase",lineHeight:1}}>PROTOCOL</span>
+            <div style={{display:"flex",alignItems:"baseline",gap:isMobile?6:10}}>
+              <span style={{fontFamily:"'DM Mono',monospace",fontSize:isMobile?12:15,letterSpacing:"0.3em",color:"rgba(255,255,255,0.92)",textTransform:"uppercase",lineHeight:1}}>HASHMARK</span>
+              {!isMobile&&<span style={{fontFamily:"'DM Mono',monospace",fontSize:8,letterSpacing:"0.16em",color:"#D4A843",padding:"3px 8px",border:"1px solid rgba(212,168,67,0.28)",borderRadius:6,background:"rgba(212,168,67,0.08)",textTransform:"uppercase",lineHeight:1}}>PROTOCOL</span>}
             </div>
           </div>
           {/* Wallet status in header */}
           {wallet
-            ? <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 14px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
+            ? <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
                 <div style={{width:5,height:5,borderRadius:"50%",background:"#34d399",flexShrink:0}}/>
                 <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#34d399",letterSpacing:"0.14em"}}>{short(wallet)}</span>
               </div>
-            : <div style={{display:"flex",alignItems:"center",gap:7,padding:"6px 14px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
+            : <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:99,background:"rgba(52,211,153,0.08)",border:"1px solid rgba(52,211,153,0.2)"}}>
                 <div style={{width:5,height:5,borderRadius:"50%",background:"#34d399",flexShrink:0,animation:"blink 2s ease-in-out infinite"}}/>
-                <span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#34d399",letterSpacing:"0.18em",textTransform:"uppercase"}}>Ledger Live</span>
+                {!isMobile&&<span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:"#34d399",letterSpacing:"0.18em",textTransform:"uppercase"}}>Ledger Live</span>}
               </div>
           }
         </header>
@@ -748,9 +756,9 @@ export default function HashmarkApp() {
         </div>
 
         {/* ── CARD ── */}
-        <div style={{flex:1,minHeight:0,width:"100%",display:"flex",alignItems:"center",justifyContent:"center",padding:"16px 16px 20px"}}>
+        <div style={{flex:1,minHeight:0,width:"100%",display:"flex",alignItems:isMobile?"flex-start":"center",justifyContent:"center",padding:isMobile?"8px 8px 16px":"16px 16px 20px"}}>
           <div style={{
-            width:"100%",maxWidth:520,height:"100%",maxHeight:760,
+            width:"100%",maxWidth:520,height:isMobile?"auto":"100%",...(!isMobile&&{maxHeight:760}),
             display:"flex",flexDirection:"column",overflow:"hidden",
             background:"rgba(10,10,22,0.84)",backdropFilter:"blur(32px)",WebkitBackdropFilter:"blur(32px)",
             border:"1px solid rgba(255,255,255,0.08)",borderRadius:24,
@@ -759,38 +767,38 @@ export default function HashmarkApp() {
           }}>
             <div style={{position:"absolute",top:0,left:32,right:32,height:1,pointerEvents:"none",background:"linear-gradient(90deg,transparent,rgba(212,168,67,0.35) 40%,rgba(155,89,232,0.22) 70%,transparent)"}}/>
 
-            <div style={{padding:"24px 24px 0",flexShrink:0}}>
+            <div style={{padding:isMobile?"16px 16px 0":"24px 24px 0",flexShrink:0}}>
               {/* Tabs */}
-              <div style={{display:"flex",gap:6,padding:6,borderRadius:18,marginBottom:20,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
+              <div style={{display:"flex",gap:6,padding:6,borderRadius:18,marginBottom:isMobile?12:20,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
                 {([
-                  {id:"record" as Tab,icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" style={{flexShrink:0}}><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>,label:"Record & Authenticate"},
-                  {id:"verify" as Tab,icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>,label:"Verify Videos"},
-                ]).map(({id,icon,label})=>{
+                  {id:"record" as Tab,icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" style={{flexShrink:0}}><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>,label:"Record & Authenticate",labelMobile:"Record"},
+                  {id:"verify" as Tab,icon:<svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{flexShrink:0}}><polyline points="20 6 9 17 4 12"/></svg>,label:"Verify Videos",labelMobile:"Verify"},
+                ]).map(({id,icon,label,labelMobile})=>{
                   const active=tab===id;
                   return(
                     <button key={id} onClick={()=>setTab(id)} style={{
                       flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
-                      padding:"10px 12px",borderRadius:12,border:"none",cursor:"pointer",transition:"all 0.3s ease",
+                      padding:isMobile?"9px 8px":"10px 12px",borderRadius:12,border:"none",cursor:"pointer",transition:"all 0.3s ease",
                       background:active?"rgba(212,168,67,0.12)":"transparent",
                       boxShadow:active?"inset 0 0 0 1px rgba(212,168,67,0.25),0 0 24px rgba(212,168,67,0.1)":"none",
                       color:active?"#D4A843":"rgba(255,255,255,0.38)",
-                      fontFamily:"'DM Mono',monospace",fontSize:10,letterSpacing:"0.14em",textTransform:"uppercase",
+                      fontFamily:"'DM Mono',monospace",fontSize:isMobile?9:10,letterSpacing:"0.14em",textTransform:"uppercase",
                     }}>
-                      {icon}{label}
+                      {icon}{isMobile?labelMobile:label}
                     </button>
                   );
                 })}
               </div>
-              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:isMobile?12:16}}>
                 <div style={{width:3,height:20,borderRadius:2,flexShrink:0,background:"linear-gradient(180deg,#D4A843,#9B59E8)"}}/>
-                <span style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:20,fontWeight:300,color:"#fff",lineHeight:1.3}}>
+                <span style={{fontFamily:"'Cormorant Garamond',Georgia,serif",fontSize:isMobile?17:20,fontWeight:300,color:"#fff",lineHeight:1.3}}>
                   {tab==="record"?"Record Authenticated Video":"Verify Video Authenticity"}
                 </span>
               </div>
-              <div style={{height:1,marginBottom:20,background:"linear-gradient(90deg,rgba(212,168,67,0.28),transparent)"}}/>
+              <div style={{height:1,marginBottom:isMobile?12:20,background:"linear-gradient(90deg,rgba(212,168,67,0.28),transparent)"}}/>
             </div>
 
-            <div style={{flex:1,minHeight:0,padding:"0 24px 24px",overflowY:"auto",display:"flex",flexDirection:"column"}}>
+            <div style={{flex:1,minHeight:0,padding:isMobile?"0 16px 16px":"0 24px 24px",overflowY:"auto",display:"flex",flexDirection:"column"}}>
               {tab==="record"
                 ? <RecordTab wallet={wallet} signer={signer} chainId={chainId} connecting={connecting} installed={installed} onConnect={connectWallet}/>
                 : <VerifyTab/>
