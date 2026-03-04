@@ -199,8 +199,14 @@ function RecordTab({ wallet, signer, chainId, connecting, installed, onConnect }
     } catch (err: unknown) {
       clearInterval(iv);
       setProgress(0);
-      const msg = (err as {reason?:string;message?:string}).reason || (err as {message?:string}).message || "Transaction failed";
-      setSignErr(msg.includes("already authenticated") ? "This video is already authenticated on-chain." : msg);
+      const raw = (err as {reason?:string;message?:string}).reason || (err as {message?:string}).message || "Transaction failed";
+      let msg = raw;
+      if (raw.includes("Failed to fetch") || raw.includes("could not coalesce") || raw.includes("UNKNOWN_ERROR")) {
+        msg = "Cannot reach the blockchain RPC. Please switch your wallet to a supported network (e.g. Sepolia or Ethereum Mainnet).";
+      } else if (raw.includes("already authenticated")) {
+        msg = "This video is already authenticated on-chain.";
+      }
+      setSignErr(msg);
       setStep("error");
     }
   };
@@ -638,31 +644,35 @@ export default function HashmarkApp() {
       // 1. Request accounts first
       await eth.request({ method: "eth_requestAccounts" });
 
-      const targetChainId = parseInt(import.meta.env.VITE_CHAIN_ID || "1337", 10);
-      const targetChainHex = "0x" + targetChainId.toString(16);
-      const rpcUrl = import.meta.env.VITE_RPC_URL || "http://127.0.0.1:8545";
+      // 2. Only switch/add chain when VITE_CHAIN_ID is explicitly configured.
+      //    Skipping this on deployments without env vars avoids sending MetaMask
+      //    to a local RPC (127.0.0.1:8545) that doesn't exist in production.
+      const configuredChainId = import.meta.env.VITE_CHAIN_ID;
+      if (configuredChainId) {
+        const targetChainId = parseInt(configuredChainId, 10);
+        const targetChainHex = "0x" + targetChainId.toString(16);
+        const rpcUrl = import.meta.env.VITE_RPC_URL as string | undefined;
 
-      // 2. Try to switch to the target chain; if not added yet, add it with full metadata
-      //    (MetaMask crashes internally when nativeCurrency/chainName are undefined)
-      try {
-        await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: targetChainHex }] });
-      } catch (switchErr: unknown) {
-        const code = (switchErr as { code?: number }).code;
-        // 4902 = chain not added to MetaMask
-        if (code === 4902) {
-          const isLocal = targetChainId === 1337 || targetChainId === 31337;
-          await eth.request({
-            method: "wallet_addEthereumChain",
-            params: [{
-              chainId: targetChainHex,
-              chainName: isLocal ? "Hashmark Local (Anvil)" : `Chain ${targetChainId}`,
-              rpcUrls: [rpcUrl],
-              nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
-              blockExplorerUrls: null,
-            }],
-          });
+        try {
+          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: targetChainHex }] });
+        } catch (switchErr: unknown) {
+          const code = (switchErr as { code?: number }).code;
+          // 4902 = chain not added to MetaMask — only add if we have an RPC URL
+          if (code === 4902 && rpcUrl) {
+            const isLocal = targetChainId === 1337 || targetChainId === 31337;
+            await eth.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: targetChainHex,
+                chainName: isLocal ? "Hashmark Local (Anvil)" : `Chain ${targetChainId}`,
+                rpcUrls: [rpcUrl],
+                nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+                blockExplorerUrls: null,
+              }],
+            });
+          }
+          // If user rejected or no RPC URL, continue with current network
         }
-        // If user rejected switch, continue anyway with current network
       }
 
       const provider = new ethers.BrowserProvider(eip);
