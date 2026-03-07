@@ -146,9 +146,11 @@ router.get("/verify/:hash", async (req, res) => {
 ───────────────────────────────────────────────────────────────────────────── */
 router.get("/info", (_req, res) => {
   const { signer } = getContractSetup();
+  const rawAddr  = process.env.CONTRACT_ADDRESS || "";
+  const addrMatch = rawAddr.match(/0x[0-9a-fA-F]{40}/);
   res.json({
-    contractAddress:    process.env.CONTRACT_ADDRESS || null,
-    rpcUrl:             process.env.RPC_URL           || null,
+    contractAddress:    addrMatch ? addrMatch[0] : null,
+    rpcUrl:             (process.env.RPC_URL || "").trim() || null,
     serverWallet:       signer ? (/** @type {import("ethers").Wallet} */ (signer)).address : null,
     serverSigning:      !!signer,
   });
