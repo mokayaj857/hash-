@@ -3,9 +3,10 @@
  * Deploy Hashmark contract using Foundry (forge create).
  *
  * Usage:
- *   npm run node:local          → starts anvil (separate terminal)
- *   npm run deploy:local        → deploys to localhost anvil
- *   npm run deploy:sepolia      → deploys to Sepolia testnet
+ *   npm run node:local           → starts anvil (separate terminal)
+ *   npm run deploy:local         → deploys to localhost anvil
+ *   npm run deploy:sepolia       → deploys to Sepolia testnet
+ *   npm run deploy:base-sepolia  → deploys to Base Sepolia testnet
  *
  * Auto-updates back/.env and root .env with the deployed contract address.
  */
@@ -20,15 +21,16 @@ const path         = require("path");
 const NETWORK = process.argv[2] || "local";
 
 const RPC = {
-  local:   process.env.RPC_URL      || "http://127.0.0.1:8545",
-  sepolia: process.env.SEPOLIA_RPC_URL || "",
+  local:         process.env.RPC_URL             || "http://127.0.0.1:8545",
+  sepolia:       process.env.SEPOLIA_RPC_URL      || "",
+  "base-sepolia": process.env.BASE_SEPOLIA_RPC_URL || "https://sepolia.base.org",
 }[NETWORK];
 
 const KEY = process.env.DEPLOY_PRIVATE_KEY || process.env.PRIVATE_KEY || "";
 
 if (!RPC) {
   console.error(`\n❌  No RPC URL for network "${NETWORK}".`);
-  console.error(`    Set SEPOLIA_RPC_URL in back/.env for Sepolia.\n`);
+  console.error(`    Set SEPOLIA_RPC_URL or BASE_SEPOLIA_RPC_URL in back/.env.\n`);
   process.exit(1);
 }
 if (!KEY) {
