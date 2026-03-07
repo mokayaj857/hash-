@@ -176,13 +176,22 @@ function RecordTab({ wallet, signer, chainId, connecting, installed, onConnect }
 
   const sign = async () => {
     if (!signer || !wallet || !hash) return;
-    if (!CONTRACT_ADDRESS) { setSignErr("CONTRACT_ADDRESS not set. Deploy the contract first."); setStep("error"); return; }
+    // Resolve contract address: use build-time env first, fall back to backend /api/info
+    let contractAddr = CONTRACT_ADDRESS;
+    if (!contractAddr) {
+      try {
+        const info = await fetch("/api/info").then(r => r.json());
+        const m = (info.contractAddress || "").match(/0x[0-9a-fA-F]{40}/);
+        contractAddr = m ? m[0] : "";
+      } catch { /* ignore */ }
+    }
+    if (!contractAddr) { setSignErr("CONTRACT_ADDRESS not set. Deploy the contract first."); setStep("error"); return; }
     setSignErr("");setStep("processing");setProgress(0);
 
     // Animate progress while waiting for MetaMask + block confirmation
     const iv = setInterval(()=>setProgress(p=>p<82?p+0.6:p),60);
     try {
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, HashmarkABI, signer);
+      const contract = new ethers.Contract(contractAddr, HashmarkABI, signer);
       const tx = await contract.authenticateVideo(hash);
       setProgress(88);
       const receipt = await tx.wait();
