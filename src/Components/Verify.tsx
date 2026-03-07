@@ -2,11 +2,11 @@ import { useState, useCallback, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ethers } from "ethers";
 import jsPDF from "jspdf";
-import { hashFile, verifyHash, getQrCode, type VerifyResult } from "../api";
+import { hashFile, verifyHash, getQrCode, getInfo, type VerifyResult } from "../api";
 import { useWallet } from "../hooks/useWallet";
 import ABI from "../abi/Hashmark.json";
 
-const CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || "";
+const ENV_CONTRACT_ADDRESS = (import.meta.env.VITE_CONTRACT_ADDRESS as string) || "";
 
 /* ─── types ─── */
 interface AuthResult {
@@ -129,6 +129,15 @@ export default function Verify() {
   const [searchParams]  = useSearchParams();
   const wallet          = useWallet();
 
+  const [contractAddress, setContractAddress] = useState(ENV_CONTRACT_ADDRESS);
+
+  // Fetch contract address from backend when not set via env var
+  useEffect(() => {
+    if (contractAddress) return;
+    getInfo().then(info => { if (info.contractAddress) setContractAddress(info.contractAddress); }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [file, setFile]           = useState<File | null>(null);
   const [hash, setHash]           = useState("");
   const [manualHash, setManualHash] = useState(searchParams.get("hash") ?? "");
@@ -189,11 +198,11 @@ export default function Verify() {
     const h = (hash || manualHash).trim();
     if (!h) return;
     if (!wallet.signer) { setError("Connect your MetaMask wallet first."); setStage("error"); return; }
-    if (!CONTRACT_ADDRESS) { setError("Contract not deployed yet. Run: cd back && npx hardhat node, then npx hardhat run scripts/deploy.js --network localhost"); setStage("error"); return; }
+    if (!contractAddress) { setError("Contract address not configured. Check your backend CONTRACT_ADDRESS environment variable."); setStage("error"); return; }
 
     reset(); setStage("authenticating");
     try {
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, wallet.signer);
+      const contract = new ethers.Contract(contractAddress, ABI, wallet.signer);
       const tx       = await contract.authenticateVideo(h);
       const receipt  = await tx.wait();
 
@@ -316,16 +325,15 @@ export default function Verify() {
           )}
 
           {/* Contract info */}
-          {CONTRACT_ADDRESS ? (
+          {contractAddress ? (
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)", fontSize: 11, opacity: 0.5, display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <span>Contract: <code>{CONTRACT_ADDRESS.slice(0,6)}…{CONTRACT_ADDRESS.slice(-4)}</code></span>
+              <span>Contract: <code>{contractAddress.slice(0,6)}…{contractAddress.slice(-4)}</code></span>
             </div>
           ) : (
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--border)", background: "rgba(212,168,67,0.06)", borderRadius: 6, padding: "10px 12px" }}>
-              <p style={{ fontSize: 12, color: "#D4A843" }}>⚠️ Contract not deployed. Run the deploy script first:</p>
+              <p style={{ fontSize: 12, color: "#D4A843" }}>⚠️ Contract address not configured. Set CONTRACT_ADDRESS in back/.env and restart the server.</p>
               <code style={{ fontSize: 11, display: "block", marginTop: 6, opacity: 0.8 }}>
-                cd back &amp;&amp; npx hardhat node<br />
-                npx hardhat run scripts/deploy.js --network localhost
+                cd back &amp;&amp; npm run deploy:local
               </code>
             </div>
           )}
