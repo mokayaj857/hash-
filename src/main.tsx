@@ -9,6 +9,7 @@ import Header from './Components/Header';
 import Scroll from './Components/scroll';
 import ErrorPage from './Components/ErrorPage';
 import White from './Components/white';
+import About from './Components/About';
 import Verify from './Components/Verify';
 import './index.css';
 const router = createBrowserRouter([
@@ -27,6 +28,10 @@ const router = createBrowserRouter([
   {
     path: "header",
     element: <Header />,
+  },
+  {
+    path: "about",
+    element: <About />,
   },
   {
     path: "white",
