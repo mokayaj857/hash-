@@ -568,6 +568,47 @@ export default function HashmarkSolutionUI() {
             </motion.div>
           </motion.section>
 
+          {/* ── Mid-page brand strip ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            style={{
+              margin: '0 0 8rem',
+              padding: '3rem 2rem',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(212,168,67,0.08) 0%, rgba(212,168,67,0.02) 100%)',
+              border: '1px solid rgba(212,168,67,0.2)',
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <motion.div
+              animate={{ opacity: [0.08, 0.18, 0.08] }}
+              transition={{ duration: 5, repeat: Infinity }}
+              style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(212,168,67,0.12), transparent 70%)', pointerEvents: 'none' }}
+            />
+            <p style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono, monospace)', letterSpacing: '0.2em', color: '#D4A843', textTransform: 'uppercase', marginBottom: '0.75rem', opacity: 0.8 }}>
+              ◆ HASHMARK PROTOCOL
+            </p>
+            <h3 style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 700, color: 'hsl(0 0% 98%)', marginBottom: '0.75rem', lineHeight: 1.25 }}>
+              Reality has a new standard.
+            </h3>
+            <p style={{ fontSize: '0.95rem', color: 'hsl(240 5% 55%)', maxWidth: '480px', margin: '0 auto 1.75rem', lineHeight: 1.65 }}>
+              Every image, video, and document — anchored on Base L2 at the moment of capture. Tamper-proof by design.
+            </p>
+            <motion.button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              whileHover={{ scale: 1.05, boxShadow: '0 0 24px rgba(212,168,67,0.35)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{ background: 'linear-gradient(135deg, #D4A843, #b8892e)', color: '#0d0d0d', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.75rem 2rem', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+            >
+              Join the Waitlist →
+            </motion.button>
+          </motion.div>
+
           {/* Use Cases */}
           <motion.section style={{ marginBottom: '6rem' }}>
             <motion.h2
@@ -645,6 +686,48 @@ export default function HashmarkSolutionUI() {
 
         </div>
       </div>
+
+      {/* ── Footer ── */}
+      <motion.footer
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        style={{
+          paddingTop: '3rem', paddingBottom: '3rem', paddingLeft: '1.5rem', paddingRight: '1.5rem',
+          borderTop: '1px solid rgba(212,168,67,0.1)',
+          backgroundColor: 'rgba(8,8,8,0.8)',
+          backdropFilter: 'blur(40px)',
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 10,
+        }}
+      >
+        <motion.div
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}
+          whileHover={{ scale: 1.06 }}
+        >
+          <motion.span
+            animate={{ rotate: [0, 360] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+            style={{ fontSize: '1.4rem', color: '#D4A843' }}
+          >
+            #
+          </motion.span>
+          <span style={{ fontWeight: 700, fontSize: '1.4rem', letterSpacing: '0.08em', background: 'linear-gradient(90deg,#D4A843,#b8892e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            HASHMARK
+          </span>
+        </motion.div>
+        <motion.p
+          animate={{ opacity: [0.55, 1, 0.55] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          style={{ fontSize: '0.8rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'hsl(240 5% 50%)', marginBottom: '2rem' }}
+        >
+          Proving reality on Base L2.
+        </motion.p>
+        <p style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.18)' }}>
+          © {new Date().getFullYear()} Hashmark Protocol. All rights reserved.
+        </p>
+      </motion.footer>
     </>
   );
 }
