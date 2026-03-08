@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Shield, Lock, Database, Zap, CheckCircle2, ArrowRight,
-  Layers, Code2, TrendingUp, BarChart3, GitBranch, Cpu,
-  Key, Network, FileCheck, AlertCircle,
+  Shield, Lock, Database, CheckCircle2, ArrowRight,
+  Code2, TrendingUp, BarChart3,
+  Key, AlertCircle,
   Fingerprint, Scale, Newspaper
 } from 'lucide-react';
 import Footer from './Footer';
@@ -58,18 +58,14 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, type: 'spring', damping: 30, stiffness: 100 }
+    transition: { duration: 0.7, type: 'spring' as const, damping: 30, stiffness: 100 }
   }
 };
 
 export default function HashmarkSolutionUI() {
   const { dark, toggleDark } = useTheme();
-  const { scrollYProgress } = useScroll();
-  const [activeTab, setActiveTab] = useState(0);
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const navigate = useNavigate();
-
-  const yOffset = useTransform(scrollYProgress, [0, 1], [0, 400]);
 
   return (
     <>

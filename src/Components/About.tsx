@@ -74,7 +74,7 @@ const itemVariants = {
 
 const revealVariants = {
   hidden: { opacity: 0, y: 50, filter: 'blur(10px)' },
-  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, type: 'spring', damping: 25 } },
+  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, type: 'spring' as const, damping: 25 } },
 };
 
 function GlowBackground() {
@@ -86,7 +86,7 @@ function GlowBackground() {
   );
 }
 
-function SectionHeading({ eyebrow, title, description, align = 'left' }) {
+function SectionHeading({ eyebrow, title, description, align = 'left' }: { eyebrow: string; title: string; description?: string; align?: string }) {
   const isCenter = align === 'center';
   return (
     <div style={{ marginBottom: '4rem', maxWidth: '48rem', ...(isCenter && { margin: '0 auto 4rem', textAlign: 'center' }) }}>
@@ -108,7 +108,7 @@ function WaitlistForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isPending, setIsPending] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
     setIsPending(true);
@@ -163,7 +163,7 @@ export default function HashmarkLanding() {
   const y = useTransform(scrollYProgress, [0, 1], [0, 250]);
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.3]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
-  const [hoveredCard, setHoveredCard] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const headlineText = 'A LEDGER FOR';
   const highlightText = 'REALITY';
 
