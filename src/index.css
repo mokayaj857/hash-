@@ -421,7 +421,25 @@ button:focus-visible {
   to   { transform: translateX(-50%); }
 }
 
-/* ── Tech Grid ── */
+html.light {
+  --bg: #f8fafc;
+  --border: rgba(0, 0, 0, 0.1);
+}
+
+html.light .trusted-label {
+  color: rgba(0, 0, 0, 0.45);
+}
+html.light .trusted-logo {
+  color: rgba(0, 0, 0, 0.5);
+}
+html.light .trusted-logo:hover {
+  color: rgba(0, 0, 0, 0.85);
+}
+html.light .trusted-sep {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+
 .tech-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

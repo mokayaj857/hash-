@@ -589,7 +589,9 @@ export default function HashmarkSolutionUI() {
             </motion.div>
           </motion.section>
 
-          <Footer />
+          <div style={{ '--bg': dark ? 'hsl(240 10% 4%)' : '#f8fafc' } as React.CSSProperties}>
+            <Footer />
+          </div>
 
           {/* Use Cases */}
           <motion.section style={{ marginBottom: '6rem' }}>

@@ -314,7 +314,7 @@ function verifyReality(contentHash) {
           </div>
         </section>
 
-        <div style={{ '--bg': 'hsl(240,10%,2%)' } as React.CSSProperties}>
+        <div style={{ '--bg': dark ? 'hsl(240,10%,2%)' : '#f8fafc' } as React.CSSProperties}>
           <Footer />
         </div>
 
