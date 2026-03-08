@@ -7,6 +7,7 @@ import {
   ShieldAlert, Newspaper, BookOpenCheck, Microscope,
   Zap, ArrowRight, CheckCircle2, Loader2
 } from 'lucide-react';
+import Footer from './Footer';
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Rajdhani:wght@500;600;700&display=swap');
@@ -294,47 +295,7 @@ function verifyReality(contentHash) {
           </div>
         </section>
 
-        {/* ── Mid-page brand strip ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          style={{
-            margin: '0 1.5rem 0',
-            padding: '3rem 2rem',
-            borderRadius: '16px',
-            background: `linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--primary) / 0.02) 100%)`,
-            border: `1px solid hsl(var(--primary) / 0.2)`,
-            textAlign: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-            zIndex: 10,
-          }}
-        >
-          <motion.div
-            animate={{ opacity: [0.08, 0.18, 0.08] }}
-            transition={{ duration: 5, repeat: Infinity }}
-            style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at center, hsl(var(--primary) / 0.12), transparent 70%)`, pointerEvents: 'none' }}
-          />
-          <p style={{ fontSize: '0.75rem', fontFamily: 'var(--font-display)', letterSpacing: '0.2em', color: `hsl(var(--primary))`, textTransform: 'uppercase', marginBottom: '0.75rem', opacity: 0.8 }}>
-            ◆ HASHMARK PROTOCOL
-          </p>
-          <h3 style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 700, fontFamily: 'var(--font-display)', color: `hsl(var(--foreground))`, marginBottom: '0.75rem', lineHeight: 1.25 }}>
-            Reality has a new standard.
-          </h3>
-          <p style={{ fontSize: '0.95rem', color: `hsl(var(--muted-foreground))`, maxWidth: '480px', margin: '0 auto 1.75rem', lineHeight: 1.65 }}>
-            Every image, video, and document — anchored on Base L2 at the moment of capture. Tamper-proof by design.
-          </p>
-          <motion.button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            whileHover={{ scale: 1.05, boxShadow: '0 0 24px rgba(212,168,67,0.35)' }}
-            whileTap={{ scale: 0.97 }}
-            style={{ background: `linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))`, color: '#0d0d0d', fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '0.85rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.75rem 2rem', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
-          >
-            Join the Waitlist →
-          </motion.button>
-        </motion.div>
+        <Footer />
 
         <section style={{ paddingTop: '8rem', paddingBottom: '8rem', paddingLeft: '1.5rem', paddingRight: '1.5rem', position: 'relative', zIndex: 10 }}>
           <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
