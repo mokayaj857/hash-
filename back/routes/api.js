@@ -573,13 +573,36 @@ router.post("/faucet", express.json(), async (req, res) => {
 });
 
 /* ── /api/waitlist — store email for early access ── */
+const fs   = require("fs");
+const WAITLIST_FILE = require("path").join(__dirname, "..", "waitlist.json");
+
+function readWaitlist() {
+  try { return JSON.parse(fs.readFileSync(WAITLIST_FILE, "utf8")); }
+  catch { return []; }
+}
+function writeWaitlist(entries) {
+  fs.writeFileSync(WAITLIST_FILE, JSON.stringify(entries, null, 2));
+}
+
 router.post("/waitlist", express.json(), (req, res) => {
   const { email } = req.body || {};
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return res.status(400).json({ error: "Valid email address required." });
-  // Log the signup; persist to DB or external service as needed
-  console.log("[waitlist]", email, new Date().toISOString());
+
+  const entries = readWaitlist();
+  if (entries.find(e => e.email === email))
+    return res.status(409).json({ error: "Email already registered." });
+
+  const entry = { email, joinedAt: new Date().toISOString() };
+  entries.push(entry);
+  writeWaitlist(entries);
+  console.log("[waitlist]", email, entry.joinedAt);
   res.json({ success: true, message: "You're on the list!" });
+});
+
+router.get("/waitlist", (_req, res) => {
+  const entries = readWaitlist();
+  res.json({ count: entries.length, entries });
 });
 
 module.exports = router;
