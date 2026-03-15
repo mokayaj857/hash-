@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Solidity build artifacts
+cache/
+out/
+/back/cache/
+/back/out/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
